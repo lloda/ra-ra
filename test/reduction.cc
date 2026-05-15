@@ -19,7 +19,6 @@ using ra::sqrm;
 int main()
 {
     TestRecorder tr(std::cout);
-    cout << "RA_FMA is " << RA_FMA << endl;
     tr.section("amax with different expr types");
     {
         auto test_amax_expr = [&tr](auto && a, auto && b){
@@ -188,9 +187,18 @@ int main()
             B(j) = sum(A(ra::all, j));
         }
         {
+            tr.test_eq(B, ra::sum(iter<1>(A)));
+        }
+        {
             ra::Unique<double, 1> C({111}, 0.);
             for_each([&C](auto && a) { C += a; }, iter<1>(A));
             tr.info("rhs iterator of rank > 0").test_eq(B, C);
+        }
+        {
+            tr.info("sum(iter<1>(...))").test_eq(B, sum(iter<1>(A)));
+            ra::Unique<double, 2> A({0, 111}, ra::_0 - ra::_1);
+            tr.test_eq(0, sum(iter<1>(A)));
+            tr.test_eq(1, prod(iter<1>(A)));
         }
         {
             ra::Unique<double, 1> C({111}, 0.);

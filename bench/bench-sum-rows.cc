@@ -19,20 +19,24 @@ int main()
     TestRecorder tr(cout);
     cout.precision(4);
 
-    auto bench = [&tr](char const * tag, int m, int n, int reps, auto && f){
-        ra::Big<real, 2> a({m, n}, ra::_0 - ra::_1);
-        ra::Big<real, 1> ref({n}, 0);
-        ra::iter<1>(ref) += ra::iter<1>(a)*reps;
-        ra::Big<real, 1> c({n}, ra::none);
-
-        auto bv = Benchmark().reps(reps).runs(3)
-            .once_f([&](auto && repeat) { c=0.; repeat([&]() { f(c, a); }); });
-        tr.info(Benchmark::report(bv, m*n), " ", tag)
-            .test_eq(ref, c);
-    };
-
     auto bench_all = [&](int m, int n, int reps){
+
+        std::vector<Benchmark::Value> v;
+        auto bench = [&](char const * tag, int m, int n, int reps, auto && f){
+            ra::Big<real, 2> a({m, n}, ra::_0 - ra::_1);
+            ra::Big<real, 1> ref({n}, 0);
+            ra::iter<1>(ref) += ra::iter<1>(a)*reps;
+            ra::Big<real, 1> c({n}, ra::none);
+
+            auto bv = Benchmark().name(tag).reps(reps).runs(3)
+                .once_f([&](auto && repeat) { c=0.; repeat([&]() { f(c, a); }); });
+            tr.info(Benchmark::report(bv, m*n), " ", tag)
+                .test_eq(ref, c);
+            v.push_back(bv);
+        };
+
         tr.section(m, " x ", n, " times ", reps);
+
         bench("raw", m, n, reps,
               [](auto & c, auto const & a){
                   real const * __restrict__ ap = a.data();
@@ -51,7 +55,7 @@ int main()
                       c(j) += sum(a(ra::all, j));
                   }
               });
-        bench("accumrows", m, n, reps,
+        bench("rows", m, n, reps,
               [](auto & c, auto const & a){
                   for_each([&c](auto && a) { c += a; }, ra::iter<1>(a));
               });
@@ -63,18 +67,21 @@ int main()
               [](auto & c, auto const & a){
                   for_each(ra::wrank<1, 1>(ra::wrank<0, 0>([](auto & c, auto a) { c += a; })), c, a);
               });
-        bench("accumscalar", m, n, reps,
+        bench("scalar", m, n, reps,
               [](auto & c, auto const & a){
                   ra::scalar(c) += ra::iter<1>(a);
               });
-        bench("accumiter", m, n, reps,
+        bench("iter", m, n, reps,
               [](auto & c, auto const & a){
                   ra::iter<1>(c) += ra::iter<1>(a);
               });
-        bench("frametransp", m, n, reps,
+        bench("transp", m, n, reps,
               [](auto & c, auto const & a){
                   c += transpose(a);
               });
+
+        std::ranges::sort(v, [](auto & a, auto & b){ return a.med<b.med; });
+        std::println(std::cout, "Best > {}{}{:nS{ / }{}}{}.", ra::esc::cyan, ra::esc::bold, map(&Benchmark::Value::name, v), ra::esc::reset);
     };
 
     bench_all(1, 1000000, 20);

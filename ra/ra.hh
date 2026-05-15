@@ -348,7 +348,7 @@ refmax(A && a, Less && less = {})
 constexpr auto
 sum(auto && a)
 {
-    auto c = ncvalue_t<decltype(a)>(0);
+    auto c = copy_shape(VAL(a), ncvalue_t<decltype(VAL(a))>(0));
     for_each([&c](auto && a){ c+=a; }, RA_FW(a));
     return c;
 }
@@ -356,7 +356,7 @@ sum(auto && a)
 constexpr auto
 prod(auto && a)
 {
-    auto c = ncvalue_t<decltype(a)>(1);
+    auto c = copy_shape(VAL(a), ncvalue_t<decltype(VAL(a))>(1));
     for_each([&c](auto && a){ c*=a; }, RA_FW(a));
     return c;
 }
