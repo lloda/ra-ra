@@ -277,7 +277,7 @@ template <int D, int O> requires (!(D>1 && 2*O>D)) struct choose_<D, O> { using 
 // Properly ra::.
 // ---------------------
 
-constexpr int VERSION = 32;
+constexpr int VERSION = 33;
 constexpr int MIS = -1922222222; // mismatch, only from common_len
 constexpr int ANY = -1944444444; // only static, meaning dynamic len/size
 constexpr int UNB = -1988888888; // unbounded, eg dead axes.
@@ -368,10 +368,10 @@ concept Slice = requires (A a)
 };
 
 RA_IS_DEF(is_scalar, !std::is_pointer_v<A> && std::is_scalar_v<A>);
-template <class T, T v> constexpr bool is_scalar_def<std::integral_constant<T, v>> = is_scalar<T>;
-template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
-template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
-template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
+template <class T, T v> constexpr inline bool is_scalar_def<std::integral_constant<T, v>> = is_scalar<T>;
+template <> constexpr inline bool is_scalar_def<std::strong_ordering> = true;
+template <> constexpr inline bool is_scalar_def<std::weak_ordering> = true;
+template <> constexpr inline bool is_scalar_def<std::partial_ordering> = true;
 // template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
 RA_IS_DEF(is_iterator, Iterator<A>)

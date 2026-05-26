@@ -311,6 +311,6 @@ struct Benchmark
     auto run_f(auto && f, auto && ... a) { return concrete(from([this, &f](auto && ... b){ return this->once_f(f, b ...); }, a ...)); }
 };
 
-template <> constexpr bool is_scalar_def<Benchmark::Value> = true;
+template <> constexpr inline bool is_scalar_def<Benchmark::Value> = true;
 
 } // namespace ra

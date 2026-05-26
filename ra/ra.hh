@@ -106,7 +106,7 @@ RA_FE(RA_FOR_FLOAT, RA_FLOATS)
 #undef RA_FOR_TYPES
 #undef RA_FLOATS
 
-template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
+template <class T> constexpr inline bool is_scalar_def<std::complex<T>> = true;
 
 
 // --------------------------------

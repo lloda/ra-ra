@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 32, updated 2026 April 2)
+<!-- ra:: (version 33, updated 2026 May 26)
 
 (c) Daniel Llorens 2005-2026
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 32, updated 2026 April 2)
+<p><code>ra::</code> (version 33, updated 2026 May 26)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2026
 </p>
@@ -2169,7 +2169,7 @@ Next: <a href="#Traversal" accesskey="n" rel="next">Traversal</a>, Previous: <a 
 
 <p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has unbounded length (such as <code>iota()</code> or dimensions created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
-<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v32) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
+<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v33) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 </p>
 <p>Finally we select a traversal method. <code>ra::</code> has two traversal methods: <code>ply_fixed</code> can be used when the rank and the traversal order are known at compile time, and <code>ply_ravel</code> can be used in the general case.
 </p>

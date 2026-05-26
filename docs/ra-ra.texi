@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 118.
 
-@set VERSION 32
-@set UPDATED 2026 April 2
+@set VERSION 33
+@set UPDATED 2026 May 26
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1582,7 +1582,7 @@ Some types are accepted automatically as scalars in mixed array/scalar operation
 
 @quotation
 @verbatim
-template <> constexpr bool ra::is_scalar_def<MYTYPE> = true;
+template <> constexpr inline bool ra::is_scalar_def<MYTYPE> = true;
 @end verbatim
 @end quotation
 
