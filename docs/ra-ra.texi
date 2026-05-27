@@ -290,7 +290,7 @@ Here is a minimal program@footnote{Examples given without context assume that on
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::print(stdout, "{:nS{|}{\n}}\n", transpose(A)); // see Formatted output
+    std::print(stdout, "{:nS{|}{\n}:c}\n", transpose(A)); // see Formatted output
 }
 @end verbatim
 @print{} h|w

@@ -173,8 +173,8 @@ int main()
     tr.section("Example from the manual [ma101]");
     {
         ra::Big<char, 2> A({2, 5}, "helloworld");
-        std::cout << fmt({ .shape=ra::noshape, .sep0="|" }, transpose(A)) << std::endl;
-        std::print(stdout, "{:nS{|}{\n}}\n", transpose(A)); // alt
+        std::cout << fmt({ .shape=ra::noshape, .sep0="|" }, transpose(A)) << std::endl; // FIXME in gcc 16.1, char prints as int
+        std::print(stdout, "{:nS{|}{\n}:c}\n", transpose(A)); // alt
     }
     {
         ra::Big<char const *, 1> A = {"hello", "array", "world"};
