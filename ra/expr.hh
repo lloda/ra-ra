@@ -486,7 +486,7 @@ struct Framematch<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple
     constexpr static std::array<int, sizeof...(Ti)> live { (rank_s<Ti>() - mp::len<Ri> - crank::value) ... };
     using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
     using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(live)>;
-    using R = typename FM::R;
+    using R = FM::R;
     constexpr static decltype(auto) op(auto && v) { return FM::op(RA_FW(v).op); } // cf [ra31]
 };
 
@@ -686,7 +686,7 @@ pack(auto && ... a) { return map([](auto && ... a){ return T { RA_FW(a) ... }; }
 template <class J> struct type_at { template <class P> using type = decltype(std::declval<P>().at(std::declval<J>())); };
 
 template <std::size_t I=0, class T, class J>
-constexpr mp::apply<std::common_reference_t, mp::map<type_at<J>::template type, mp::drop1<std::decay_t<T>>>>
+constexpr mp::apply<std::common_reference_t, mp::map<type_at<J>::template type, mp::rest<std::decay_t<T>>>>
 pick_at(std::size_t p0, T && t, J const & j)
 {
     if constexpr (constexpr std::size_t N = mp::len<std::decay_t<T>> - 1; I<N) {
@@ -698,8 +698,9 @@ pick_at(std::size_t p0, T && t, J const & j)
 
 template <class P> using type_star = decltype(*std::declval<P>());
 
+// FIXME pack indexing instead of tuple?
 template <std::size_t I=0, class T>
-constexpr mp::apply<std::common_reference_t, mp::map<type_star, mp::drop1<std::decay_t<T>>>>
+constexpr mp::apply<std::common_reference_t, mp::map<type_star, mp::rest<std::decay_t<T>>>>
 pick_star(std::size_t p0, T && t)
 {
     if constexpr (constexpr std::size_t N = mp::len<std::decay_t<T>> - 1; I<N) {

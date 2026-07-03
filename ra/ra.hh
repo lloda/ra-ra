@@ -511,7 +511,7 @@ struct Wedge
             static_assert((!is_scalar<Va> || 0==Sa::where) && (!is_scalar<Vb> || 0==Sb::where));
             auto aw = [&a]{ if constexpr (is_scalar<Va>) return a; else return a[Sa::where]; }();
             auto bw = [&b]{ if constexpr (is_scalar<Vb>) return b; else return b[Sb::where]; }();
-            return (decltype(aw)(sign))*aw*bw + term<Xr, mp::drop1<Fa>>(a, b);
+            return (decltype(aw)(sign))*aw*bw + term<Xr, mp::rest<Fa>>(a, b);
         }
     }
     constexpr static void
@@ -527,10 +527,10 @@ template <int D, int O>
 struct Hodge
 {
     using W = Wedge<D, O, D-O>;
-    using Ca = typename W::Ca;
-    using Cb = typename W::Cb;
-    using Cr = typename W::Cr;
-    using LexOrCa = typename W::LexOrCa;
+    using Ca = W::Ca;
+    using Cb = W::Cb;
+    using Cr = W::Cr;
+    using LexOrCa = W::LexOrCa;
     constexpr static int Na = W::Na;
     constexpr static int Nb = W::Nb;
 // if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used. Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
@@ -638,8 +638,8 @@ struct Dual
 
     constexpr static bool is_complex = requires (T & a) { []<class R>(std::complex<R> &){}(a); };
     template <class S> struct real_part { struct type {}; };
-    template <class S> requires (is_complex) struct real_part<S> { using type = typename S::value_type; };
-    using real_type = typename real_part<T>::type;
+    template <class S> requires (is_complex) struct real_part<S> { using type = S::value_type; };
+    using real_type = real_part<T>::type;
 
     constexpr Dual(T const & r, T const & d): re(r), du(d) {}
     constexpr Dual(T const & r): re(r), du(0.) {} // conversions are by default constants.

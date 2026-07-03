@@ -49,7 +49,7 @@ to_ravel(auto && x, auto && b)
 // ---------------------
 
 template <class T, class Dimv> struct nested_arg_ { using type = noarg<>; };
-template <class T, class Dimv> using nested_arg = typename nested_arg_<T, Dimv>::type;
+template <class T, class Dimv> using nested_arg = nested_arg_<T, Dimv>::type;
 
 template <class T, class Dimv, class nested_args = mp::makelist<(0==ssize(Dimv::value) ? 0 : Dimv::value[0].len), nested_arg<T, Dimv>>>
 struct SmallArray;
@@ -268,7 +268,7 @@ struct Array
     constexpr bool empty() const { return dimv_empty(dimv); }
 #undef RAC
     Store store;
-    using T = typename storage_traits<Store>::T;
+    using T = storage_traits<Store>::T;
     constexpr auto data(this auto && sf) { return storage_traits<Store>::data(sf.store); }
     constexpr auto view() { return View<T *, Dimv const &>(dimv, data()); }
     constexpr auto view() const { return View<T const *, Dimv const &>(dimv, data()); }
@@ -380,7 +380,7 @@ template <class E> requires (0!=rank_s<E>() && ANY!=size_s<E>())
 struct concrete_type_<E> { using type = SmallArray<ncvalue_t<E>, ic_t<c_dimv(shape_s<E>)>>; };
 
 template <class E>
-using concrete_type = typename concrete_type_<E>::type;
+using concrete_type = concrete_type_<E>::type;
 
 template <class E> constexpr auto
 concrete(E && e) { return concrete_type<E>(RA_FW(e)); }
@@ -629,7 +629,12 @@ stencil(Slice auto && a, auto && lo, auto && hi)
     return s;
 }
 
+template <std::size_t i> decltype(auto) get(ra::Slice auto && s) { return RA_FW(s)[i]; }
+
 } // namespace ra
+
+template <ra::Slice S> struct std::tuple_size<S>: std::integral_constant<std::size_t, ra::size_s<S>()> {};
+template <std::size_t i, ra::Slice S> struct std::tuple_element<i, S> { using type = ra::value_t<S>; };
 
 // gcc 16 ff. Ambiguity bc these are std::range but use a custom formatter.
 
@@ -637,6 +642,6 @@ stencil(Slice auto && a, auto && lo, auto && hi)
 #define RA_NONLOCK_PRINT(X) \
 template <class ... A> constexpr bool std::enable_nonlocking_formatter_optimization<X<A ...>> \
   = std::enable_nonlocking_formatter_optimization<ra::ncvalue_t<X<A ...>>>;
-RA_FE(RA_NONLOCK_PRINT, ra::Array, ra::SmallArray);
+RA_FE(RA_NONLOCK_PRINT, ra::Array, ra::SmallArray, ra::View);
 #undef RA_NONLOCK_PRINT
 #endif

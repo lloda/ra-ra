@@ -21,6 +21,21 @@ using int2 = ra::Small<int, 2>;
 int main()
 {
     TestRecorder tr;
+    tr.section("structured binding");
+    {
+        int2 x = {1, 2};
+        auto & [x0, x1] = x; // on array
+        x0 = 3;
+        x1 = 4;
+        tr.test_eq(3, x[0]);
+        tr.test_eq(4, x[1]);
+        auto y = x();
+        auto & [y0, y1] = y; // on view
+        y0 = 8;
+        y1 = 9;
+        tr.test_eq(8, x[0]);
+        tr.test_eq(9, x[1]);
+    }
     tr.section("transpose(ra::Small)");
     {
         ra::Small<double, 2, 3> const a(ra::_0 + 10*ra::_1);

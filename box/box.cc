@@ -19,7 +19,7 @@ using std::cout, std::endl, std::flush;
 namespace ra {
 
 template <class T, class I> struct btt;
-template <class T, int i0, int ... i> struct btt<T, ilist_t<i0, i ...>> { using type = typename btt<T, ilist_t<i ...>>::type [i0]; };
+template <class T, int i0, int ... i> struct btt<T, ilist_t<i0, i ...>> { using type = btt<T, ilist_t<i ...>>::type [i0]; };
 template <class T> struct btt<T, ilist_t<>> { using type = T; };
 
 template <class T, class Dimv> struct bttq;

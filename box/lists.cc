@@ -9,11 +9,58 @@
 
 #include <iostream>
 #include "ra/test.hh"
-#include "mpdebug.hh"
+#include "test/mpdebug.hh"
 
 using std::tuple, std::tuple_element, std::is_same_v;
 using std::cout, std::endl, ra::TestRecorder;
 using ra::int_c, ra::mp::ref, ra::ilist_t;
+
+namespace ra::mp {
+
+// FIXME to replace std::tuple for typelists, because std::tuple has constraints on the types that we don't care for
+
+template <class ... T> struct list {};
+template <class L> constexpr int llen = []<class ... T>(list<T ...>){ return sizeof...(T); }(L {});
+template <class L> constexpr bool is_list = false;
+template <class ... T> constexpr bool is_list<list<T ...>> = true;
+
+template <class L> struct list2tuple_;
+template <class ... T> struct list2tuple_<list<T ...>> { using type = std::tuple<T ...>; };
+template <class L> using list2tuple = list2tuple_<L>;
+
+template <class ... L> struct lappend_;
+template <class ... L> using lappend = lappend_<L ...>::type;
+template <class ... T> struct lappend_<list<T ...>> { using type = list<T ...>; };
+template <class ... T, class ... S, class ... A> struct lappend_<list<T ...>, list<S ...>, A ...> { using type = lappend<list<T ..., S ...>, A ...>; };
+template <class A, class B> using lcons = lappend<list<A>, B>;
+
+template <int n, int o, int s> struct liota_ { static_assert(n>0); using type = lcons<ic_t<o>, typename liota_<n-1, o+s, s>::type>; };
+template <int o, int s> struct liota_<0, o, s> { using type = list<>; };
+template <int n, int o=0, int s=1> using liota = liota_<n, o, s>::type;
+
+template <int n, class T> struct lmakelist_ { static_assert(n>0); using type = lcons<T, typename lmakelist_<n-1, T>::type>; };
+template <class T> struct lmakelist_<0, T> { using type = list<>; };
+template <int n, class T> using lmakelist = lmakelist_<n, T>::type;
+
+template <class L> using lrest = decltype([]<class T0, class ... T>(list<T0, T ...>){ return list<T ...> {}; }(L {}));
+
+template <class A> struct lfirst_;
+template <class T0, class ... T> struct lfirst_<list<T0, T ...>> { using type = T0; }; // FIXME c++26 use lref
+template <class A> using lfirst = lfirst_<A>::type;
+
+template <class L, int n> struct ldrop_ { static_assert(n>0); using type = ldrop_<lrest<L>, n-1>::type; };
+template <class L> struct ldrop_<L, 0> { using type = L; };
+template <class L, int n> using ldrop = ldrop_<L, n>::type;
+
+template <class L, int n> struct ltake_ { static_assert(n>0); using type = lcons<lfirst<L>, typename ltake_<lrest<L>, n-1>::type>; };
+template <class L> struct ltake_<L, 0> { using type = list<>; };
+template <class L, int n> using ltake = ltake_<L, n>::type;
+
+template <class A, int ... I> struct lref_ { using type = A; };
+template <class A, int ... I> using lref = lref_<A, I ...>::type;
+template <class A, int I0, int ... I> struct lref_<A, I0, I ...> { using type = lref<lfirst<ldrop<A, I0>>, I ...>; }; // FIXME c++26
+
+}; // namespace ra::mp
 
 template <class A>
 struct Inc1

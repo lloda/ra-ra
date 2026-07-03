@@ -26,7 +26,7 @@ template <class T, class sizes>
 struct nested_tuple
 {
     constexpr static int rank = ra::mp::len<sizes>;
-    using sub = typename nested_tuple<T, ra::mp::drop1<sizes>>::type;
+    using sub = nested_tuple<T, ra::mp::rest<sizes>>::type;
     using type = ra::mp::makelist<ra::mp::ref<sizes, 0>::value, sub>;
     using atype = sub[ra::mp::ref<sizes, 0>::value];
 };
