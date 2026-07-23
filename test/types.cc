@@ -15,7 +15,6 @@
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::ilist_t, ra::mp::nil;
 
 template <class A>
 void

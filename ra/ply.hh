@@ -139,7 +139,7 @@ ply_fixed(Iterator auto && a, Early const & early = none)
         }
     } else {
 // inside first. FIXME better heuristic - but first need a way to force row-major
-        constexpr auto order = std::apply([](auto ... i){ return std::array<int, rank>{(rank-1-i) ...}; }, mp::iota<rank>{});
+        constexpr auto order = []<class ... I>(list<I ...>){ return std::array<int, rank>{(rank-1-I{}) ...}; }(mp::iota<rank>{});
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Warray-bounds"
         auto ss0 = a.step(order[0]); // gcc 14.1 with RA_CHECK=0 and sanitizer on
@@ -461,7 +461,7 @@ frompl(auto pl, Slice auto const & a, auto const & ...  i)
 constexpr auto
 spacer(auto && b, auto && p, auto && q)
 {
-    return std::apply([&b](auto ... i){ return std::make_tuple(ra::iota(clen(b, i)) ...); }, mp::iota<q-p, p>{});
+    return [&b]<class ... I>(list<I ...>){ return std::make_tuple(ra::iota(clen(b, I{})) ...); }(mp::iota<q-p, p>{});
 }
 
 template <class I, int drop>
@@ -481,7 +481,7 @@ constexpr decltype(auto)
 fromu(B && b, auto && ds, auto && c, auto && ti)
 {
     return std::apply([&b](auto && ... i){
-        return map(fromu_loop<mp::tuple<ic_t<rank_s(i)> ...>, 1>(std::forward<B>(b)), RA_FW(i) ...);
+        return map(fromu_loop<ilist_t<rank_s(i) ...>, 1>(std::forward<B>(b)), RA_FW(i) ...);
     }, std::tuple_cat(RA_FW(ti), spacer(b, ic<(0==c ? 0 : 1+ds()[c-1])>, ic<rank(b)>)));
 }
 
@@ -531,7 +531,7 @@ from(A && a, auto && ...  i)
 // unbeaten on original rank
         } else if constexpr (sizeof...(i)==dsn && sizeof...(i)==(0 + ... + (ANY!=rank_s(i)))) {
             RA_CK(rank(a)==sizeof...(i), "Run time reframe rank(a) ", rank(a), " args ", sizeof...(i), ".");
-            return map(fromu_loop<mp::tuple<ic_t<rank_s(i)> ...>, 1>(
+            return map(fromu_loop<ilist_t<rank_s(i) ...>, 1>(
                          [a=std::tuple<A>(RA_FW(a))](auto && ... i) -> decltype(auto)
                          { return *frompl(std::get<0>(a).data(), std::get<0>(a), i ...); }),
                        RA_FW(i) ...);
@@ -540,13 +540,13 @@ from(A && a, auto && ...  i)
             RA_CK(dsn==bn, "Run time reframe dsn ", dsn, " bn ", bn, ".");
             ViewBig<decltype(a.data()), dsn> b;
             b.cp = fromb<1, 1, 0>(a.data(), 0, b.dimv, 0, a, 0, i ...);
-            return fromu(std::move(b), ic<std::apply([](auto ... i) { return std::array { int(i) ... }; }, mp::iota<dsn> {})>,
+            return fromu(std::move(b), ic<[]<class ... I>(list<I ...>){ return std::array { int(I{}) ... }; }(mp::iota<dsn> {})>,
                          ic<0>, std::tuple<> {}, RA_FW(i) ...);
         }
     } else if constexpr (0==sizeof...(i)) { // map(op) isn't defined
         return RA_FW(a)();
     } else {
-        return map(fromu_loop<mp::tuple<ic_t<rank_s(i)> ...>, 1>(RA_FW(a)), RA_FW(i) ...);
+        return map(fromu_loop<ilist_t<rank_s(i) ...>, 1>(RA_FW(a)), RA_FW(i) ...);
     }
 }
 

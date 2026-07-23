@@ -12,7 +12,7 @@
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::Wedge, ra::hodgex, ra::ilist_t;
+using ra::Wedge, ra::hodgex;
 
 using real = double;
 using complex = std::complex<double>;
@@ -147,21 +147,21 @@ main()
     {
         using la = ra::mp::iota<3>;
         using ca = ra::mp::combs<la, 2>;
-        findcombtester<ilist_t<0, 1>, ca, 0, +1>::check();
-        findcombtester<ilist_t<1, 0>, ca, 0, -1>::check();
-        findcombtester<ilist_t<0, 2>, ca, 1, +1>::check();
-        findcombtester<ilist_t<2, 0>, ca, 1, -1>::check();
-        findcombtester<ilist_t<1, 2>, ca, 2, +1>::check();
-        findcombtester<ilist_t<2, 1>, ca, 2, -1>::check();
-        findcombtester<ilist_t<0, 0>, ca, -1,  0>::check();
-        findcombtester<ilist_t<1, 1>, ca, -1,  0>::check();
-        findcombtester<ilist_t<2, 2>, ca, -1,  0>::check();
-        findcombtester<ilist_t<3, 0>, ca, -1,  0>::check();
+        findcombtester<ra::ilist_t<0, 1>, ca, 0, +1>::check();
+        findcombtester<ra::ilist_t<1, 0>, ca, 0, -1>::check();
+        findcombtester<ra::ilist_t<0, 2>, ca, 1, +1>::check();
+        findcombtester<ra::ilist_t<2, 0>, ca, 1, -1>::check();
+        findcombtester<ra::ilist_t<1, 2>, ca, 2, +1>::check();
+        findcombtester<ra::ilist_t<2, 1>, ca, 2, -1>::check();
+        findcombtester<ra::ilist_t<0, 0>, ca, -1,  0>::check();
+        findcombtester<ra::ilist_t<1, 1>, ca, -1,  0>::check();
+        findcombtester<ra::ilist_t<2, 2>, ca, -1,  0>::check();
+        findcombtester<ra::ilist_t<3, 0>, ca, -1,  0>::check();
     }
     tr.section("Testing findcomb II");
     {
         using la = ra::mp::iota<3>;
-        static_assert(std::is_same_v<ra::mp::combs<la, 3>, std::tuple<la>>);
+        static_assert(std::is_same_v<ra::mp::combs<la, 3>, ra::list<la>>);
     }
     tr.section("Testing anticomb");
     {

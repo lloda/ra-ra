@@ -27,7 +27,7 @@ template <class T, class Dimv> struct bttq;
 template <class T, class Dimv> requires (is_ctype<Dimv>)
 struct bttq<T, Dimv>
 {
-    using type = btt<T, decltype(std::apply([](auto ... i){ return ilist<Dimv::value[i].len ...>; }, mp::iota<Dimv::value.size()>{}))>::type;
+    using type = btt<T, decltype([]<class ... I>(list<I ...>){ return ilist<Dimv::value[i].len ...>; }(mp::iota<Dimv::value.size()>{}))>::type;
 };
 template <class T, class Dimv> requires (!is_ctype<Dimv>)
 struct bttq<T, Dimv>

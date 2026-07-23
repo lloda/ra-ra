@@ -58,112 +58,118 @@
 #define RA_OPT_SMALL 0
 #endif
 
-namespace ra {
-
-template <auto V> using ic_t = std::integral_constant<std::remove_const_t<decltype(V)>, V>;
-template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(V)>, V> ic {};
-template <class A> concept is_ctype = requires (A a) { []<auto X>(ic_t<X> const &){}(a); };
-template <int ... I> using ilist_t = std::tuple<ic_t<I> ...>;
-template <int ... I> constexpr ilist_t<I ...> ilist {};
-
 
 // ---------------------
 // Tuple library.
 // ---------------------
 
+namespace ra {
+
+template <auto V> using ic_t = std::integral_constant<std::remove_const_t<decltype(V)>, V>;
+template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(V)>, V> ic {};
+template <class A> concept is_ctype = requires (A a) { []<auto X>(ic_t<X> const &){}(a); };
+template <class ... T> struct list {};
+template <int ... I> using ilist_t = list<ic_t<I> ...>;
+template <int ... I> constexpr ilist_t<I ...> ilist {};
+
 namespace mp {
 
-using std::tuple;
-using nil = tuple<>;
+template <class L> constexpr int len = []<class ... T>(list<T ...>){ return sizeof...(T); }(L {});
+template <class L> constexpr bool is_list = requires (L l) { []<class ... T>(list<T ...> const &){}(l); };
 
-template <class A> constexpr int len = std::tuple_size_v<A>;
-template <class T> constexpr bool is_tuple = false;
-template <class ... A> constexpr bool is_tuple<tuple<A ...>> = true;
-template <class ... A> using append = decltype(std::tuple_cat(std::declval<A>() ...));
-template <class A, class B> using cons = append<tuple<A>, B>;
+template <class L> struct tuple2list_;
+template <class ... T> struct tuple2list_<std::tuple<T ...>> { using type = list<T ...>; };
+template <class L> using tuple2list = tuple2list_<L>::type;
 
-// ref<A, I0, I ...> = ref<ref<A, I0>, I ...>
-template <class A, int ... I> struct ref_ { using type = A; };
-template <class A, int ... I> using ref = ref_<A, I ...>::type;
-template <class A, int I0, int ... I> struct ref_<A, I0, I ...> { using type = ref<std::tuple_element_t<I0, A>, I ...>; };
-template <class A> using first = ref<A, 0>;
+template <class ... L> struct append_;
+template <class ... L> using append = append_<L ...>::type;
+template <class ... T> struct append_<list<T ...>> { using type = list<T ...>; };
+template <class ... T, class ... S, class ... A> struct append_<list<T ...>, list<S ...>, A ...> { using type = append<list<T ..., S ...>, A ...>; };
+template <class A, class B> using cons = append<list<A>, B>;
 
 template <int n, int o, int s> struct iota_ { static_assert(n>0); using type = cons<ic_t<o>, typename iota_<n-1, o+s, s>::type>; };
-template <int o, int s> struct iota_<0, o, s> { using type = nil; };
+template <int o, int s> struct iota_<0, o, s> { using type = list<>; };
 template <int n, int o=0, int s=1> using iota = iota_<n, o, s>::type;
 
 template <int n, class T> struct makelist_ { static_assert(n>0); using type = cons<T, typename makelist_<n-1, T>::type>; };
-template <class T> struct makelist_<0, T> { using type = nil; };
+template <class T> struct makelist_<0, T> { using type = list<>; };
 template <int n, class T> using makelist = makelist_<n, T>::type;
 
-template <class A> struct rest_;
-template <class A0, class ... A> struct rest_<tuple<A0, A ...>> { using type = tuple<A ...>; };
-template <class A> using rest = rest_<A>::type;
+template <class L> struct rest_;
+template <class T0, class ... T> struct rest_<list<T0, T ...>> { using type = list<T ...>; };
+template <class L> using rest = rest_<L>::type;
 
-template <class A, int n> struct drop_ { static_assert(n>0); using type = drop_<rest<A>, n-1>::type; };
-template <class A> struct drop_<A, 0> { using type = A; };
-template <class A, int n> using drop = drop_<A, n>::type;
+template <class L> struct first_;
+template <class T0, class ... T> struct first_<list<T0, T ...>> { using type = T0; }; // c++26
+template <class L> using first = first_<L>::type;
 
-template <class A, int n> struct take_ { static_assert(n>0); using type = cons<first<A>, typename take_<rest<A>, n-1>::type>; };
-template <class A> struct take_<A, 0> { using type = nil; };
-template <class A, int n> using take = take_<A, n>::type;
+template <class L, int n> struct drop_ { static_assert(n>0); using type = drop_<rest<L>, n-1>::type; };
+template <class L> struct drop_<L, 0> { using type = L; };
+template <class L, int n> using drop = drop_<L, n>::type;
+
+template <class L, int n> struct take_ { static_assert(n>0); using type = cons<first<L>, typename take_<rest<L>, n-1>::type>; };
+template <class L> struct take_<L, 0> { using type = list<>; };
+template <class L, int n> using take = take_<L, n>::type;
+
+template <class L, int ... I> struct ref_ { using type = L; };
+template <class L, int ... I> using ref = ref_<L, I ...>::type;
+template <class L, int I0, int ... I> struct ref_<L, I0, I ...> { using type = ref<first<drop<L, I0>>, I ...>; }; // FIXME c++26
 
 template <template <class ... A> class F, class L> struct apply_;
-template <template <class ... A> class F, class ... L> struct apply_<F, tuple<L ...>> { using type = F<L ...>; };
+template <template <class ... A> class F, class ... L> struct apply_<F, list<L ...>> { using type = F<L ...>; };
 template <template <class ... A> class F, class L> using apply = apply_<F, L>::type;
 
 template <template <class ... A> class F, class ... L> struct map_ { using type = cons<F<first<L> ...>, typename map_<F, rest<L> ...>::type>; };
-template <template <class ... A> class F, class ... L> struct map_<F, nil, L ...> { using type = nil; };
-template <template <class ... A> class F> struct map_<F> { using type = nil; };
+template <template <class ... A> class F, class ... L> struct map_<F, list<>, L ...> { using type = list<>; };
+template <template <class ... A> class F> struct map_<F> { using type = list<>; };
 template <template <class ... A> class F, class ... L> using map = map_<F, L ...>::type;
 
-// Return the index of a type in a type list, or -1 if not found.
-template <class A, class T, int i=0> struct index_ { using type = ic_t<-1>; };
+template <class A, class T, int i=0> struct index_ { using type = ic_t<-1>; }; // not found case
 template <class A, class T, int i=0> using index = index_<A, T, i>::type;
-template <class ... A, class T, int i> struct index_<tuple<T, A ...>, T, i> { using type = ic_t<i>; };
-template <class A0, class ... A, class T, int i> struct index_<tuple<A0, A ...>, T, i> { using type = index<tuple<A ...>, T, i+1>; };
+template <class ... A, class T, int i> struct index_<list<T, A ...>, T, i> { using type = ic_t<i>; };
+template <class A0, class ... A, class T, int i> struct index_<list<A0, A ...>, T, i> { using type = index<list<A ...>, T, i+1>; };
 
-// Index (& type) of the 1st item for which Pred<> is true, or -1 (& nil).
+// not found case
 template <class A, template <class> class Pred, int i=0>
 struct indexif
 {
     constexpr static int value = -1;
-    using type = nil;
+    using type = list<>;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
 requires (Pred<A0>::value)
-struct indexif<tuple<A0, A ...>, Pred, i>
+struct indexif<list<A0, A ...>, Pred, i>
 {
     using type = A0;
     constexpr static int value = i;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
 requires (!(Pred<A0>::value))
-struct indexif<tuple<A0, A ...>, Pred, i>
+struct indexif<list<A0, A ...>, Pred, i>
 {
-    using next = indexif<tuple<A ...>, Pred, i+1>;
+    using next = indexif<list<A ...>, Pred, i+1>;
     using type = next::type;
     constexpr static int value = next::value;
 };
 
 template <class A, class Val> struct findtail_;
 template <class A, class Val> using findtail = findtail_<A, Val>::type;
-template <class Val> struct findtail_<nil, Val> { using type = nil; };
-template <class ... A, class Val> struct findtail_<tuple<Val, A ...>, Val> { using type = tuple<Val, A ...>; };
-template <class A0, class ... A, class Val> struct findtail_<tuple<A0, A ...>, Val> { using type = findtail<tuple<A ...>, Val>; };
+template <class Val> struct findtail_<list<>, Val> { using type = list<>; };
+template <class ... A, class Val> struct findtail_<list<Val, A ...>, Val> { using type = list<Val, A ...>; };
+template <class A0, class ... A, class Val> struct findtail_<list<A0, A ...>, Val> { using type = findtail<list<A ...>, Val>; };
 
 template <class A, class B> struct reverse_ { using type = B; };
-template <class A, class B=nil> using reverse = reverse_<A, B>::type;
-template <class A0, class ... A, class B> struct reverse_<tuple<A0, A ...>, B> { using type = reverse<tuple<A ...>, cons<A0, B>>; };
+template <class A, class B=list<>> using reverse = reverse_<A, B>::type;
+template <class A0, class ... A, class B> struct reverse_<list<A0, A ...>, B> { using type = reverse<list<A ...>, cons<A0, B>>; };
 
-template <class A, class B> struct filter_ { using type = append<std::conditional_t<first<A>::value, take<B, 1>, nil>, typename filter_<rest<A>, rest<B>>::type>; };
-template <class B> struct filter_<nil, B> { using type = B; };
+template <class A, class B> struct filter_ { using type = append<std::conditional_t<first<A>::value, take<B, 1>, list<>>, typename filter_<rest<A>, rest<B>>::type>; };
+template <class B> struct filter_<list<>, B> { using type = B; };
 template <class A, class B> using filter = filter_<A, B>::type;
 
 // Prepend element to each of a list of lists.
 template <class c, class A> struct mapcons_;
 template <class c, class A> using mapcons = mapcons_<c, A>::type;
-template <class c, class ... A> struct mapcons_<c, tuple<A ...>> { using type = tuple<cons<c, A> ...>; };
+template <class c, class ... A> struct mapcons_<c, list<A ...>> { using type = list<cons<c, A> ...>; };
 
 // These are used only with ilists, so decltype(... return T {}) is ok.
 
@@ -175,7 +181,7 @@ struct complement_list_
 {
     using type = decltype([]{
         if constexpr (0==len<T>) {                                  // end of T.
-            return nil {};
+            return list<> {};
         } else if constexpr (0==len<S>) {                           // not found in S.
             return cons<first<T>, complement_list<SS, rest<T>>> {};
         } else if constexpr (std::is_same_v<first<S>, first<T>>) {  // found in S.
@@ -209,9 +215,9 @@ template <class S, int end> using complement = complement_sorted_list<S, iota<en
 // K-combinations of the N elements of list A.
 template <class A, int K> struct combs_;
 template <class A, int K> using combs = combs_<A, K>::type;
-template <class A> struct combs_<A, 0> { using type = tuple<nil>; };
-template <class A> struct combs_<A, len<A>> { using type = tuple<A>; };
-template <> struct combs_<nil, 0> { using type = tuple<nil>; };
+template <class A> struct combs_<A, 0> { using type = list<list<>>; };
+template <class A> struct combs_<A, len<A>> { using type = list<A>; };
+template <> struct combs_<list<>, 0> { using type = list<list<>>; };
 template <class A, int K>
 struct combs_
 {
@@ -223,9 +229,9 @@ struct combs_
 template <class C, class R> struct permsign;
 template <int w, class C, class R> constexpr int permsignfound = permsign<append<take<C, w>, drop<C, w+1>>, rest<R>>::value * ((w & 1) ? -1 : +1);
 template <class C, class R> constexpr int permsignfound<-1, C, R>  = 0;
-template <> struct permsign<nil, nil> { constexpr static int value = 1; };
-template <class C> struct permsign<C, nil> { constexpr static int value = 0; };
-template <class R> struct permsign<nil, R> { constexpr static int value = 0; };
+template <> struct permsign<list<>, list<>> { constexpr static int value = 1; };
+template <class C> struct permsign<C, list<>> { constexpr static int value = 0; };
+template <class R> struct permsign<list<>, R> { constexpr static int value = 0; };
 template <class C, class R> struct permsign { constexpr static int value = permsignfound<index<C, first<R>>::value, C, R>; };
 
 template <class P, class Plist>
@@ -247,7 +253,7 @@ using anticomb = decltype([]{
     return cons<ref<EC, sign<0 ? 1 : 0>, cons<ref<EC, (sign<0) ? 0 : 1>, drop<EC, 2>>> {};
 }());
 
-template <class T, int D> using mapanticomb = decltype([]<class ... C>(tuple<C ...>){ return tuple<anticomb<C, D> ...> {}; }(T {}));
+template <class T, int D> using mapanticomb = decltype([]<class ... C>(list<C ...>){ return list<anticomb<C, D> ...> {}; }(T {}));
 
 template <int D, int O> struct choose_;
 template <int D, int O> using choose = decltype([]{ static_assert(D>=O, "Bad choose."); return typename choose_<D, O>::type {}; }());
@@ -343,9 +349,8 @@ concept Iterator = requires (A a, rank_t k, dim_t d, rank_t i)
     { *a };
 };
 
-// Used by the structured binding support, so A like std::tuple<void> must not error (examples/read-me.cc)
 template <class A>
-concept Slice = !mp::is_tuple<A> && requires (A a)
+concept Slice = requires (A a)
 {
     { a.rank() } -> std::same_as<rank_t>;
     requires has_len<decltype(a.data())> || std::bidirectional_iterator<decltype(a.data())>;
@@ -409,7 +414,7 @@ constexpr auto shape_s = []{
     if constexpr (constexpr rank_t rs=rank_s<V>(); 0==rs) {
         return std::array<dim_t, 0> {};
     } else if constexpr (is_builtin<V>) {
-        return std::apply([](auto ... i){ return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
+        return []<class ... I>(list<I ...>){ return std::array { dim_t(std::extent_v<V, I {}>) ... }; }(mp::iota<rs> {});
     } else if constexpr (requires (V v) { []<class T, std::size_t N>(std::array<T, N> const &){}(v); }) {
         return std::array { dim_t(std::tuple_size_v<V>) };
     } else if constexpr (is_fov<V> && requires { V::extent; }) {
@@ -417,7 +422,7 @@ constexpr auto shape_s = []{
     } else if constexpr (is_fov<V>) {
         return std::array { ANY };
     } else {
-        return std::apply([](auto ... i){ return std::array { V::len_s(i) ... }; }, mp::iota<rs> {});
+        return []<class ... I>(list<I ...>){ return std::array { V::len_s(I {}) ... }; }(mp::iota<rs> {});
     }
 }();
 
@@ -456,7 +461,7 @@ shape(V const & v)
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); 1==rs) {
         return std::array<dim_t, 1> { ra::size(v) };
     } else if constexpr (ANY!=rs) {
-        return std::apply([&v](auto ... i){ return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
+        return [&v]<class ... I>(list<I ...>){ return std::array<dim_t, rs> { v.len(I{}) ... }; }(mp::iota<rs> {});
     } else {
         return std::ranges::to<vector_default_init<dim_t>>(
             std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k){ return v.len(k); }));

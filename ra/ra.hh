@@ -518,7 +518,7 @@ struct Wedge
     prod(auto const & a, auto const & b, auto & r)
     {
         static_assert(ra::size(a)==Na && ra::size(b)==Nb && ra::size(r)==Nr, "Bad dims.");
-        [&]<class ... Xr>(std::tuple<Xr ...>) { r = { term<Xr, mp::combs<Xr, Oa>>(a, b) ... }; }(Cr{});
+        [&]<class ... Xr>(list<Xr ...>) { r = { term<Xr, mp::combs<Xr, Oa>>(a, b) ... }; }(Cr{});
     }
 };
 

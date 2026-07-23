@@ -58,7 +58,7 @@ template <class T, class Dimv> requires (requires { T(); } && 0<ssize(Dimv::valu
 struct nested_arg_<T, Dimv>
 {
     constexpr static auto n = ssize(Dimv::value)-1;
-    constexpr static auto s = std::apply([](auto ... i){ return std::array<dim_t, n> { Dimv::value[i].len ... }; }, mp::iota<n, 1>{});
+    constexpr static auto s = []<class ... I>(list<I ...>){ return std::array<dim_t, n> { Dimv::value[I {}].len ... }; }(mp::iota<n, 1>{});
     using type = std::conditional_t<0==n, T, SmallArray<T, ic_t<c_dimv(s)>>>;
 };
 
@@ -171,7 +171,7 @@ struct
 #if RA_OPT_SMALL==1
 alignas(align_req<T, dimv_size(Dimv_::value)>)
 #endif
-SmallArray<T, Dimv_, std::tuple<nested_args ...>>
+SmallArray<T, Dimv_, list<nested_args ...>>
 {
     using Dimv = Dimv_;
     constexpr static auto dimv = Dimv::value;
@@ -358,7 +358,7 @@ shared_borrowing(Slice auto & s)
     return a;
 }
 
-template <int w> constexpr auto tindex = reframe(iter(iota()), ilist_t<w> {});
+template <int w> constexpr auto tindex = reframe(iter(iota()), ilist<w>);
 #define RA_TINDEX(w) constexpr auto RA_JOIN(_, w) = tindex<w>;
 RA_FE(RA_TINDEX, 0, 1, 2, 3, 4);
 #undef RA_TINDEX

@@ -11,9 +11,8 @@
 #include "ra/test.hh"
 #include "mpdebug.hh"
 
-using std::tuple, std::tuple_element, std::is_same_v;
-using std::cout, std::endl, ra::TestRecorder;
-using ra::int_c, ra::mp::ref, ra::ilist_t;
+using std::is_same_v, std::cout, std::endl, ra::TestRecorder;
+using ra::list, ra::int_c, ra::mp::ref, ra::ilist_t;
 
 template <class A>
 struct Inc1
@@ -76,7 +75,7 @@ struct fold_
     using type = fold_<F, F<def, first<L> ...>, rest<L> ...>::type;
 };
 template <template <class ... A> class F, class Def, class ... L>
-struct fold_<F, Def, nil, L ...>
+struct fold_<F, Def, list<>, L ...>
 {
     using type = std::conditional_t<std::is_same_v<void, Def>, F<>, Def>;
 };
@@ -92,9 +91,9 @@ template <class ... A> using max = int_c<[]() { int r=std::numeric_limits<int>::
 template <class ... A> using min = int_c<[]() { int r=std::numeric_limits<int>::max(); ((r=std::min(r, A::value)), ...); return r; }()>;
 
 template <class A> struct InvertIndex_;
-template <class ... A> struct InvertIndex_<tuple<A ...>>
+template <class ... A> struct InvertIndex_<list<A ...>>
 {
-    using AT = tuple<A ...>;
+    using AT = list<A ...>;
     template <class T> using IndexA = int_c<index<AT, T>::value>;
     constexpr static int N = apply<max, AT>::value;
     using type = map<IndexA, iota<(N>=0 ? N+1 : 0)>>;
@@ -104,12 +103,12 @@ template <class A> using InvertIndex = InvertIndex_<A>::type;
 // Prepend list to each list in a list of lists.
 template <class c, class A> struct mapprepend_;
 template <class c, class A> using mapprepend = mapprepend_<c, A>::type;
-template <class c, class ... A> struct mapprepend_<c, tuple<A ...>> { using type = tuple<append<c, A> ...>; };
+template <class c, class ... A> struct mapprepend_<c, list<A ...>> { using type = list<append<c, A> ...>; };
 
 // Form all lists by prepending an element of A to an element of B.
-template <class A, class B> struct prodappend_ { using type = nil; };
+template <class A, class B> struct prodappend_ { using type = list<>; };
 template <class A, class B> using prodappend = prodappend_<A, B>::type;
-template <class A0, class ... A, class B> struct prodappend_<tuple<A0, A ...>, B> { using type = append<mapprepend<A0, B>, prodappend<tuple<A ...>, B>>; };
+template <class A0, class ... A, class B> struct prodappend_<list<A0, A ...>, B> { using type = append<mapprepend<A0, B>, prodappend<list<A ...>, B>>; };
 
 } // namespace ra::mp
 
@@ -120,14 +119,22 @@ int main()
     {
         static_assert(True::value, "bad True");
     }
-// Map
+// map
     {
         using A = ilist_t<5, 6, 3>;
         using B = ilist_t<2, 3, -1>;
         static_assert(ra::mp::check_idx<ra::mp::map<ra::mp::sum, A>, 5, 6, 3>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::map<ra::mp::sum, A, B>, 7, 9, 2>::value, "");
     }
-// fold.
+// rest
+    {
+        static_assert(is_same_v<ilist_t<6, 3>, ra::mp::rest<ilist_t<5, 6, 3>>>);
+    }
+// tuple2list
+    {
+        static_assert(is_same_v<ilist_t<6, 3>, ra::mp::tuple2list<std::tuple<ra::ic_t<6>, ra::ic_t<3>>>>);
+    }
+// fold
     {
         using A = ilist_t<5, 6, 3>;
         using B = ilist_t<2, 3, -1>;
@@ -172,9 +179,9 @@ int main()
     using A = ilist_t<0, 2, 3>;
     using B = ilist_t<5, 6, 7>;
     using C = ilist_t<9, 8>;
-    static_assert(is_same_v<ilist_t<>, ra::mp::nil>, "");
-    static_assert(is_same_v<C, tuple<int_c<9>, int_c<8>>>, "");
-    using O = ra::mp::nil;
+    static_assert(is_same_v<ilist_t<>, list<>>, "");
+    static_assert(is_same_v<C, list<int_c<9>, int_c<8>>>, "");
+    using O = list<>;
     using A_B = ra::mp::append<A, B>;
     using A_C = ra::mp::append<A, C>;
     using C_B = ra::mp::append<C, B>;
@@ -194,21 +201,21 @@ int main()
     static_assert(ra::mp::check_idx<ra::mp::makelist<2, int_c<9>>, 9, 9>::value, "1a");
     static_assert(ra::mp::check_idx<ra::mp::makelist<0, int_c<9>>>::value, "1b");
 // ref
-    static_assert(ref<tuple<A, B, C>, 0, 0>::value==0, "3a");
-    static_assert(ref<tuple<A, B, C>, 0, 1>::value==2, "3b");
-    static_assert(ref<tuple<A, B, C>, 0, 2>::value==3, "3c");
-    static_assert(ref<tuple<A, B, C>, 1, 0>::value==5, "3d");
-    static_assert(ref<tuple<A, B, C>, 1, 1>::value==6, "3e");
-    static_assert(ref<tuple<A, B, C>, 1, 2>::value==7, "3f");
-    static_assert(ref<tuple<A, B, C>, 2, 0>::value==9, "3g");
-    static_assert(ref<tuple<A, B, C>, 2, 1>::value==8, "3h");
+    static_assert(ref<list<A, B, C>, 0, 0>::value==0, "3a");
+    static_assert(ref<list<A, B, C>, 0, 1>::value==2, "3b");
+    static_assert(ref<list<A, B, C>, 0, 2>::value==3, "3c");
+    static_assert(ref<list<A, B, C>, 1, 0>::value==5, "3d");
+    static_assert(ref<list<A, B, C>, 1, 1>::value==6, "3e");
+    static_assert(ref<list<A, B, C>, 1, 2>::value==7, "3f");
+    static_assert(ref<list<A, B, C>, 2, 0>::value==9, "3g");
+    static_assert(ref<list<A, B, C>, 2, 1>::value==8, "3h");
     static_assert(ra::mp::first<B>::value==5 && ra::mp::first<C>::value==9, "3i");
 // Useful default.
-    static_assert(ra::mp::len<ref<ra::mp::nil>> ==0, "3i");
+    static_assert(ra::mp::len<ref<list<>>> ==0, "3i");
 // 3-indices.
-    using S2AB = tuple<A, B>;
-    using S2BC = tuple<B, C>;
-    using S3 = tuple<S2AB, S2BC>;
+    using S2AB = list<A, B>;
+    using S2BC = list<B, C>;
+    using S3 = list<S2AB, S2BC>;
 // in S2AB.
     static_assert(ref<S3, 0, 0, 0>::value==0, "3j");
     static_assert(ref<S3, 0, 0, 1>::value==2, "3k");
@@ -253,12 +260,12 @@ int main()
     static_assert(is_same_v<ra::mp::findtail<A, int_c<0>>, A>, "4a");
     static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_c<2>>, 2, 3>::value, "4b");
     static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_c<3>>, 3>::value, "4c");
-    static_assert(std::is_same_v<ra::mp::nil, ra::mp::findtail<A, int_c<4>>>, "4d");
-    static_assert(is_same_v<ra::mp::findtail<S3, S2BC>, tuple<S2BC>>, "4e");
+    static_assert(std::is_same_v<list<>, ra::mp::findtail<A, int_c<4>>>, "4d");
+    static_assert(is_same_v<ra::mp::findtail<S3, S2BC>, list<S2BC>>, "4e");
 // reverse.
     static_assert(ra::mp::check_idx<ra::mp::reverse<A_B>, 7, 6, 5, 3, 2, 0>::value, "5a");
     static_assert(ra::mp::check_idx<ra::mp::reverse<O>>::value, "5b");
-    static_assert(is_same_v<ra::mp::reverse<ra::mp::nil>, ra::mp::nil>, "bad reverse");
+    static_assert(is_same_v<ra::mp::reverse<list<>>, list<>>, "bad reverse");
 // drop & take
     static_assert(ra::mp::check_idx<ra::mp::drop<A, 0>, 0, 2, 3>::value, "bad 6a");
     static_assert(ra::mp::check_idx<ra::mp::drop<A, 1>, 2, 3>::value, "bad 6b");
@@ -280,7 +287,7 @@ int main()
         using c36 = ra::mp::complement<list3, 6>;
         static_assert(ra::mp::check_idx<c36, 3, 4, 5>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::complement<c36, 6>, 0, 1, 2>::value, "");
-        using case0 = tuple<int_c<0>>;
+        using case0 = list<int_c<0>>;
         static_assert(ra::mp::check_idx<ra::mp::complement<case0, 0>>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::complement<case0, 1>>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::complement<case0, 2>, 1>::value, "");
@@ -306,7 +313,7 @@ static_assert(ra::mp::check_idx<ra::mp::complement_sorted_list<ilist_t A , B > C
         CHECK_COMPLEMENT_SLIST( <1>,     l3,  _ 0 _ 2 )
         CHECK_COMPLEMENT_SLIST( <2>,     l3,  _ 0 _ 1 )
         CHECK_COMPLEMENT_SLIST( <>,      l3,  _ 0 _ 1 _ 2 )
-        CHECK_COMPLEMENT_SLIST( <>,      ra::mp::nil, )
+        CHECK_COMPLEMENT_SLIST( <>,      list<>, )
 #undef CHECK_COMPLEMENT_SLIST
 #undef _
 #define _ ,
@@ -324,7 +331,7 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<ilist_t A , B > C >::val
         CHECK_COMPLEMENT_LIST( <1>,     l3,  _ 0 _ 2 )
         CHECK_COMPLEMENT_LIST( <2>,     l3,  _ 0 _ 1 )
         CHECK_COMPLEMENT_LIST( <>,      l3,  _ 0 _ 1 _ 2 )
-        CHECK_COMPLEMENT_LIST( <>,      ra::mp::nil, )
+        CHECK_COMPLEMENT_LIST( <>,      list<>, )
 // this must also work on unserted lists.
         CHECK_COMPLEMENT_LIST( <1 _ 0>, l3,  _ 2 )
         CHECK_COMPLEMENT_LIST( <2 _ 1>, l3,  _ 0 )
@@ -340,13 +347,13 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<ilist_t A , B > C >::val
     {
         using a = ra::mp::iota<2>;
         using b = ra::mp::iota<2, 1>;
-        using mc = ra::mp::mapcons<int_c<9>, tuple<a, b>>;
+        using mc = ra::mp::mapcons<int_c<9>, list<a, b>>;
         static_assert(ra::mp::check_idx<ref<mc, 0>, 9, 0, 1>::value, "a");
         static_assert(ra::mp::check_idx<ref<mc, 1>, 9, 1, 2>::value, "b");
     }
 // Combinations.
     {
-        static_assert(ra::mp::len<ra::mp::combs<ra::mp::nil, 0>> == 1, "");
+        static_assert(ra::mp::len<ra::mp::combs<list<>, 0>> == 1, "");
         using l3 = ra::mp::iota<3>;
         using c31 = ra::mp::combs<l3, 1>;
         using c32 = ra::mp::combs<l3, 2>;
@@ -392,7 +399,7 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<ilist_t A , B > C >::val
         using ca = ra::mp::combs<la, 1>;
         using lb = ra::mp::iota<3>;
         using cb = ra::mp::combs<lb, 1>;
-        using test0 = ra::mp::mapprepend<ra::mp::nil, cb>;
+        using test0 = ra::mp::mapprepend<list<>, cb>;
         static_assert(is_same_v<test0, cb>, "");
         using test1 = ra::mp::mapprepend<la, cb>;
         static_assert(ra::mp::len<test1> == int(ra::mp::len<cb>), "");

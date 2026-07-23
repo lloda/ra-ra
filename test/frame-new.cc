@@ -21,9 +21,9 @@ namespace ra::mp {
 
 template <class K, class T, class F>
 constexpr auto
-fold_tuple(K && k, T && t, F && f)
+fold_list(K && k, T && t, F && f)
 {
-    return std::apply([&](auto ... i) { auto r=k; ((r=f(r, i)), ...); return r; }, t);
+    return [&]<class ... I>(list<I ...>){ auto r=k; ((r=f(r, I{})), ...); return r; }(t);
 }
 
 } // namespace ra::mp
@@ -41,9 +41,9 @@ main()
     tr.section("II");
     {
         ra::ilist_t<6, 3, -4> x;
-        static_assert(6==ra::mp::fold_tuple(-99, x, [](auto && k, auto && a) { return max(k, a.value); }));
-        static_assert(-4==ra::mp::fold_tuple(+99, x, [](auto && k, auto && a) { return min(k, a.value); }));
-        static_assert(5==ra::mp::fold_tuple(0, x, [](auto && k, auto && a) { return k + a.value; }));
+        static_assert(6==ra::mp::fold_list(-99, x, [](auto && k, auto && a){ return max(k, a.value); }));
+        static_assert(-4==ra::mp::fold_list(+99, x, [](auto && k, auto && a){ return min(k, a.value); }));
+        static_assert(5==ra::mp::fold_list(0, x, [](auto && k, auto && a){ return k + a.value; }));
     }
     tr.section("static size - like Map");
     {

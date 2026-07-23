@@ -18,24 +18,6 @@
 using std::cout, std::endl, std::flush, std::tuple, ra::dim_t, ra::TestRecorder;
 using real = double;
 
-// Find the driver for given axis (This isn't used anymore in ra::; see ra::Match).
-template <int iarg, class T>
-constexpr int
-driver(T && t, int k)
-{
-    if constexpr (iarg<ra::mp::len<std::decay_t<T>>) {
-        if (k<std::get<iarg>(t).rank()) {
-            dim_t s = std::get<iarg>(t).len(k);
-            if (s>=0) {
-                return iarg;
-            }
-        }
-        return driver<iarg+1>(t, k);
-    } else {
-        std::abort(); // no driver
-    }
-}
-
 // ewv = expression-with-verb
 
 template <class V, class A, class B>
@@ -45,7 +27,7 @@ nested_wrank_demo(V && v, A && a, B && b)
     std::iota(a.begin(), a.end(), 10);
     std::iota(b.begin(), b.end(), 1);
     {
-        using FM = ra::Framematch<V, tuple<decltype(iter(a)), decltype(iter(b))>>;
+        using FM = ra::Framematch<V, ra::list<decltype(iter(a)), decltype(iter(b))>>;
         cout << "width of fm: " << ra::mp::len<typename FM::R> << endl;
         cout << ra::mp::print_ilist_t<typename FM::R> {} << endl;
         auto af0 = reframe(iter(a), ra::mp::ref<typename FM::R, 0>{});
@@ -56,9 +38,6 @@ nested_wrank_demo(V && v, A && a, B && b)
             auto ewv = ra::map_(FM::op(v), af0, af1);
             cout << sizeof(ewv) << endl;
             cout << "ewv rank I: " << ewv.rank() << endl;
-            for (int k=0; k<ewv.rank(); ++k) {
-                cout << ewv.len(k) << ": " << driver<0>(ewv.t, k) << endl;
-            }
 
             // cout << ra::mp::show<decltype(ra::ewv<FM>(FM::op(v), af0, af1))>::value << endl;
             cout << "\nusing (ewv &):\n";
@@ -105,7 +84,7 @@ int main()
         auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         {
             auto v = ra::wrank<0, 2>(plus2real_print);
-            using FM = ra::Framematch<decltype(v), tuple<decltype(iter(a)), decltype(iter(b))>>;
+            using FM = ra::Framematch<decltype(v), ra::list<decltype(iter(a)), decltype(iter(b))>>;
             cout << "width of fm: " << ra::mp::len<FM::R> << endl;
             cout << ra::mp::print_ilist_t<FM::R> {} << endl;
             auto af0 = reframe(iter(a), ra::mp::ref<FM::R, 0>{});
@@ -115,9 +94,6 @@ int main()
             auto ewv = ra::map_(FM::op(v), af0, af1);
             cout << sizeof(ewv) << "\n" << endl;
             cout << "ewv rank II: " << ewv.rank() << endl;
-            for (int k=0; k<ewv.rank(); ++k) {
-                cout << ewv.len(k) << ": " << flush << driver<0>(ewv.t, k) << endl;
-            }
             ra::ply_ravel(ewv);
         }
     }
@@ -355,12 +331,12 @@ int main()
     {
         ra::View<ra::Seq<>, ra::ic_t<ra::c_dimv(std::array<int, 3> {2, 3, 4})>> a(ra::Seq<> {0});
         auto test = [&](auto dest) { tr.strict().test_eq(transpose(a, dest), reframe(ra::iter(a), dest)); };
-        test(ra::ilist_t<0, 1, 2> {});
-        test(ra::ilist_t<1, 2, 0> {});
-        test(ra::ilist_t<2, 0, 1> {});
-        test(ra::ilist_t<2, 1, 0> {});
-        test(ra::ilist_t<1, 0, 2> {});
-        test(ra::ilist_t<0, 2, 1> {});
+        test(ra::ilist<0, 1, 2>);
+        test(ra::ilist<1, 2, 0>);
+        test(ra::ilist<2, 0, 1>);
+        test(ra::ilist<2, 1, 0>);
+        test(ra::ilist<1, 0, 2>);
+        test(ra::ilist<0, 2, 1>);
     }
     return tr.summary();
 }

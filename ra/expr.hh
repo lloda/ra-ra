@@ -260,7 +260,7 @@ struct CellBase<P, Dimv, Cr>: public ViewBase<Dimv>
     using ViewBase<Dimv>::simv;
     constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s(simv), maybe_any<Cr>) : ANY;
     constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s(simv), maybe_any<Cr>) : ANY;
-    using CellDimv = ic_t<std::apply([](auto ... i){ return std::array<std::decay_t<decltype(simv[0])>, cellr>{simv[i+framer] ...}; }, mp::iota<cellr> {})>;
+    using CellDimv = ic_t<[]<class ... I>(list<I ...>){ return std::array<std::decay_t<decltype(simv[0])>, cellr>{simv[I {}+framer] ...}; }(mp::iota<cellr> {})>;
 };
 
 template <class P, class Dimv, class Cr>
@@ -475,26 +475,26 @@ wrank(cranks, Op && op) { return Verb<cranks, Op> { RA_FW(op) }; }
 template <rank_t ... crank, class Op> constexpr auto
 wrank(Op && op) { return Verb<ilist_t<crank ...>, Op> { RA_FW(op) }; }
 
-template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, int skip=0>
+template <class V, class T, class R=mp::makelist<mp::len<T>, list<>>, int skip=0>
 struct Framematch;
 
 // Get list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
 template <class ... crank, class W, class ... Ti, class ... Ri, int skip>
-struct Framematch<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
+struct Framematch<Verb<list<crank ...>, W>, list<Ti ...>, list<Ri ...>, skip>
 {
 // TODO crank negative, inf.
     constexpr static std::array<int, sizeof...(Ti)> live { (rank_s<Ti>() - mp::len<Ri> - crank::value) ... };
-    using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
-    using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(live)>;
+    using frameaxes = list<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
+    using FM = Framematch<W, list<Ti ...>, frameaxes, skip + std::ranges::max(live)>;
     using R = FM::R;
     constexpr static decltype(auto) op(auto && v) { return FM::op(RA_FW(v).op); } // cf [ra31]
 };
 
 template <class V, class ... Ti, class ... Ri, int skip>
-struct Framematch<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
+struct Framematch<V, list<Ti ...>, list<Ri ...>, skip>
 {
 // TODO -crank::value when the actual verb rank is used
-    using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
+    using R = list<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
     constexpr static decltype(auto) op(auto && v) { return RA_FW(v); }
 };
 
@@ -503,7 +503,7 @@ struct Framematch<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 // Prefix match.
 // --------------------
 
-template <class T, class K=mp::iota<mp::len<T>>> struct Match;
+template <class T, class K=mp::iota<std::tuple_size_v<T>>> struct Match;
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
 
 template <Iterator A>
@@ -645,11 +645,11 @@ template <class V, class ... T, int ... i>
 constexpr bool
 agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 {
-    using FM = Framematch<V, std::tuple<T ...>>;
+    using FM = Framematch<V, list<T ...>>;
     return agree_op(FM::op(v), reframe(iter(t), mp::ref<typename FM::R, i> {}) ...);
 }
 
-template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
+template <class Op, class T, class K=mp::iota<std::tuple_size_v<T>>> struct Map;
 template <class Op, Iterator ... P, int ... I>
 struct Map<Op, std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...>>
 {
@@ -669,7 +669,7 @@ template <class Op, class ... P, int ... i>
 constexpr auto
 map_verb(ilist_t<i ...>, Op && op, P && ... p)
 {
-    using FM = Framematch<std::decay_t<Op>, std::tuple<P ...>>;
+    using FM = Framematch<std::decay_t<Op>, list<P ...>>;
     return map_(FM::op(RA_FW(op)), reframe(RA_FW(p), mp::ref<typename FM::R, i> {}) ...);
 }
 
@@ -686,10 +686,10 @@ pack(auto && ... a) { return map([](auto && ... a){ return T { RA_FW(a) ... }; }
 template <class J> struct type_at { template <class P> using type = decltype(std::declval<P>().at(std::declval<J>())); };
 
 template <std::size_t I=0, class T, class J>
-constexpr mp::apply<std::common_reference_t, mp::map<type_at<J>::template type, mp::rest<std::decay_t<T>>>>
+constexpr mp::apply<std::common_reference_t, mp::map<type_at<J>::template type, mp::rest<mp::tuple2list<std::decay_t<T>>>>>
 pick_at(std::size_t p0, T && t, J const & j)
 {
-    if constexpr (constexpr std::size_t N = mp::len<std::decay_t<T>> - 1; I<N) {
+    if constexpr (constexpr std::size_t N = std::tuple_size_v<std::decay_t<T>> - 1; I<N) {
         return (p0==I) ? get<I+1>(t).at(j) : pick_at<I+1>(p0, t, j);
     } else {
         RA_CK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
@@ -698,19 +698,18 @@ pick_at(std::size_t p0, T && t, J const & j)
 
 template <class P> using type_star = decltype(*std::declval<P>());
 
-// FIXME pack indexing instead of tuple?
 template <std::size_t I=0, class T>
-constexpr mp::apply<std::common_reference_t, mp::map<type_star, mp::rest<std::decay_t<T>>>>
+constexpr mp::apply<std::common_reference_t, mp::map<type_star, mp::rest<mp::tuple2list<std::decay_t<T>>>>> // c++26
 pick_star(std::size_t p0, T && t)
 {
-    if constexpr (constexpr std::size_t N = mp::len<std::decay_t<T>> - 1; I<N) {
+    if constexpr (constexpr std::size_t N = std::tuple_size_v<std::decay_t<T>> - 1; I<N) {
         return (p0==I) ? *(get<I+1>(t)) : pick_star<I+1>(p0, t);
     } else {
         RA_CK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
     }
 }
 
-template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
+template <class T, class K=mp::iota<std::tuple_size_v<T>>> struct Pick;
 template <Iterator ... P, int ... I> requires (sizeof...(P)>1)
 struct Pick<std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...>>
 {

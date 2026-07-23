@@ -35,14 +35,14 @@ struct show
 
 template <class A> struct print_ilist_t {};
 
-template <class A> std::ostream &
-operator<<(std::ostream & o, print_ilist_t<A> const & a)
+template <class L> std::ostream &
+operator<<(std::ostream & o, print_ilist_t<L> const & a)
 {
-    if constexpr (is_tuple<A>) {
-        std::apply([&o](auto ... a) { ((o << "[") << ... << print_ilist_t<decltype(a)> {}) << "]"; }, A {});
+    if constexpr (is_list<L>) {
+        [&o]<class ... I>(list<I ...>){ ((o << "[") << ... << print_ilist_t<I> {}) << "]"; }(L {});
         return o;
     } else {
-        return (o << A::value << " ");
+        return (o << L::value << " ");
     }
 }
 
@@ -58,12 +58,12 @@ type_name()
 }
 
 template <class A, int ... I> struct check_idx { constexpr static bool value = false; };
-template <> struct check_idx<nil> { constexpr static bool value = true; };
+template <> struct check_idx<list<>> { constexpr static bool value = true; };
 
 template <class A0, int I0, class ... A, int ... I>
-struct check_idx<tuple<A0, A ...>, I0, I ...>
+struct check_idx<list<A0, A ...>, I0, I ...>
 {
-    constexpr static bool value = (A0::value==I0) && check_idx<tuple<A ...>, I ...>::value;
+    constexpr static bool value = (A0::value==I0) && check_idx<list<A ...>, I ...>::value;
 };
 
 } // namespace ra::mp
