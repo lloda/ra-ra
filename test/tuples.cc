@@ -115,27 +115,42 @@ template <class A0, class ... A, class B> struct prodappend_<list<A0, A ...>, B>
 int main()
 {
     TestRecorder tr(std::cout);
-// Booleans.
+    tr.section("booleans");
     {
         static_assert(True::value, "bad True");
     }
-// map
+    tr.section("map");
     {
         using A = ilist_t<5, 6, 3>;
         using B = ilist_t<2, 3, -1>;
         static_assert(ra::mp::check_idx<ra::mp::map<ra::mp::sum, A>, 5, 6, 3>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::map<ra::mp::sum, A, B>, 7, 9, 2>::value, "");
     }
-// rest
+    tr.section("rest");
     {
         static_assert(is_same_v<ilist_t<6, 3>, ra::mp::rest<ilist_t<5, 6, 3>>>);
     }
-// tuple2list / list2tuple
+    tr.section("tuple2list / list2tuple");
     {
         static_assert(is_same_v<ilist_t<6, 3>, ra::mp::tuple2list<std::tuple<ra::ic_t<6>, ra::ic_t<3>>>>);
         static_assert(is_same_v<ra::mp::list2tuple<ilist_t<6, 3>>, std::tuple<ra::ic_t<6>, ra::ic_t<3>>>);
     }
-// fold
+    tr.section("type lists are tuple like");
+    {
+        auto [z0, z1] = ra::ilist<3, 4>;
+        tr.test_eq(3, z0);
+        tr.test_eq(4, z1);
+#if __cpp_structured_bindings >= 202411L // 'can introduce a pack'
+        auto f1 = []<class L>(L) { const /* hmm */ auto [... i] = ra::mp::list2tuple<L> {}; return ra::Small<int, sizeof...(i)> { i ... }; };
+        auto f2 = []<class L>(L) { constexpr auto [... i] = L {}; return ra::Small<int, sizeof...(i)> { i ... }; };
+        tr.strict().test_eq(ra::Small<int, 2> { 3, 4 }, f1(ra::ilist<3, 4>));
+        tr.strict().test_eq(ra::Small<int, 2> { 3, 4 }, f2(ra::ilist<3, 4>));
+#endif
+#if __cpp_impl_reflection >= 202506L // 'c++26 reflection'
+        // FIXME directly with types
+#endif
+    }
+    tr.section("fold");
     {
         using A = ilist_t<5, 6, 3>;
         using B = ilist_t<2, 3, -1>;
@@ -148,7 +163,7 @@ int main()
         static_assert(ra::mp::fold<ra::mp::min, void, A>::value==3, "");
         static_assert(ra::mp::fold<ra::mp::min, int_c<1>, A>::value==1, "");
     }
-// Reductions.
+    tr.section("reductions");
     {
         using list_ = ilist_t<>;
         using list_1 = ilist_t<1>;

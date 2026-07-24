@@ -629,12 +629,16 @@ stencil(Slice auto && a, auto && lo, auto && hi)
     return s;
 }
 
-template <std::size_t i> decltype(auto) get(ra::Slice auto && s) { return RA_FW(s)[i]; }
+template <std::size_t i> constexpr decltype(auto) get(ra::Slice auto && s) { return RA_FW(s)[i]; }
+template <std::size_t i, class ... T> constexpr auto get(list<T ...> const & l) { return mp::ref<list<T ...>, i> {}; }
 
 } // namespace ra
 
 template <ra::Slice S> struct std::tuple_size<S>: std::integral_constant<std::size_t, ra::size_s<S>()> {};
+template <class ... T> struct std::tuple_size<ra::list<T ...>>: std::integral_constant<std::size_t, sizeof...(T)> {};
+
 template <std::size_t i, ra::Slice S> struct std::tuple_element<i, S> { using type = ra::value_t<S>; };
+template <std::size_t i, class ... T> struct std::tuple_element<i, ra::list<T ...>> { using type = ra::mp::ref<ra::list<T ...>, i>; };
 
 // gcc 16 ff. Ambiguity bc these are std::range but use a custom formatter.
 
