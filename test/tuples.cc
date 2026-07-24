@@ -94,7 +94,7 @@ template <class A> struct InvertIndex_;
 template <class ... A> struct InvertIndex_<list<A ...>>
 {
     using AT = list<A ...>;
-    template <class T> using IndexA = int_c<index<AT, T>::value>;
+    template <class T> using IndexA = int_c<index<AT, T>>;
     constexpr static int N = apply<max, AT>::value;
     using type = map<IndexA, iota<(N>=0 ? N+1 : 0)>>;
 };
@@ -130,9 +130,10 @@ int main()
     {
         static_assert(is_same_v<ilist_t<6, 3>, ra::mp::rest<ilist_t<5, 6, 3>>>);
     }
-// tuple2list
+// tuple2list / list2tuple
     {
         static_assert(is_same_v<ilist_t<6, 3>, ra::mp::tuple2list<std::tuple<ra::ic_t<6>, ra::ic_t<3>>>>);
+        static_assert(is_same_v<ra::mp::list2tuple<ilist_t<6, 3>>, std::tuple<ra::ic_t<6>, ra::ic_t<3>>>);
     }
 // fold
     {
@@ -230,11 +231,11 @@ int main()
     static_assert(ref<S3, 1, 1, 0>::value==9, "3s");
     static_assert(ref<S3, 1, 1, 1>::value==8, "3t");
 // index.
-    static_assert(ra::mp::index<A, int_c<0>>::value==0, "4a");
-    static_assert(ra::mp::index<A, int_c<2>>::value==1, "4b");
-    static_assert(ra::mp::index<A, int_c<3>>::value==2, "4c");
-    static_assert(ra::mp::index<A, int_c<4>>::value==-1, "4d");
-    static_assert(ra::mp::index<S3, S2BC>::value==1, "4e");
+    static_assert(ra::mp::index<A, int_c<0>> == 0, "4a");
+    static_assert(ra::mp::index<A, int_c<2>> == 1, "4b");
+    static_assert(ra::mp::index<A, int_c<3>> == 2, "4c");
+    static_assert(ra::mp::index<A, int_c<4>> == -1, "4d");
+    static_assert(ra::mp::index<S3, S2BC> == 1, "4e");
 // InvertIndex
     {
         using II0 = ilist_t<4, 6, 7, 1>;
@@ -252,10 +253,10 @@ int main()
         static_assert(is_same_v<ilist_t<>, II1>);
     }
 // indexif.
-    static_assert(ra::mp::indexif<A, SamePP<int_c<0>>::type>::value==0, "5a");
-    static_assert(ra::mp::indexif<A, SamePP<int_c<2>>::type>::value==1, "5b");
-    static_assert(ra::mp::indexif<A, SamePP<int_c<3>>::type>::value==2, "5c");
-    static_assert(ra::mp::indexif<A, SamePP<int_c<9>>::type>::value==-1, "5d");
+    static_assert(ra::mp::indexif<A, SamePP<int_c<0>>::type> == 0, "5a");
+    static_assert(ra::mp::indexif<A, SamePP<int_c<2>>::type> == 1, "5b");
+    static_assert(ra::mp::indexif<A, SamePP<int_c<3>>::type> == 2, "5c");
+    static_assert(ra::mp::indexif<A, SamePP<int_c<9>>::type> == -1, "5d");
 // findtail.
     static_assert(is_same_v<ra::mp::findtail<A, int_c<0>>, A>, "4a");
     static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_c<2>>, 2, 3>::value, "4b");

@@ -58,12 +58,12 @@
 #define RA_OPT_SMALL 0
 #endif
 
+namespace ra {
+
 
 // ---------------------
-// Tuple library.
+// Type list library. Was std::tuple, but we don't need or want to hold values.
 // ---------------------
-
-namespace ra {
 
 template <auto V> using ic_t = std::integral_constant<std::remove_const_t<decltype(V)>, V>;
 template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(V)>, V> ic {};
@@ -81,11 +81,15 @@ template <class L> struct tuple2list_;
 template <class ... T> struct tuple2list_<std::tuple<T ...>> { using type = list<T ...>; };
 template <class L> using tuple2list = tuple2list_<L>::type;
 
+template <class L> struct list2tuple_;
+template <class ... T> struct list2tuple_<list<T ...>> { using type = std::tuple<T ...>; };
+template <class L> using list2tuple = list2tuple_<L>::type;
+
 template <class ... L> struct append_;
 template <class ... L> using append = append_<L ...>::type;
 template <class ... T> struct append_<list<T ...>> { using type = list<T ...>; };
 template <class ... T, class ... S, class ... A> struct append_<list<T ...>, list<S ...>, A ...> { using type = append<list<T ..., S ...>, A ...>; };
-template <class A, class B> using cons = append<list<A>, B>;
+template <class T, class L> using cons = append<list<T>, L>;
 
 template <int n, int o, int s> struct iota_ { static_assert(n>0); using type = cons<ic_t<o>, typename iota_<n-1, o+s, s>::type>; };
 template <int o, int s> struct iota_<0, o, s> { using type = list<>; };
@@ -115,6 +119,16 @@ template <class L, int ... I> struct ref_ { using type = L; };
 template <class L, int ... I> using ref = ref_<L, I ...>::type;
 template <class L, int I0, int ... I> struct ref_<L, I0, I ...> { using type = ref<first<drop<L, I0>>, I ...>; }; // FIXME c++26
 
+template <class L, class T>
+constexpr int index = [](this auto const & sf, auto i) -> int {
+    if constexpr (i >= len<L>) return -1; else return std::is_same_v<T, ref<L, i>> ? i : sf(ic<i+1>);
+}(ic<0>);
+
+template <class L, template <class> class Pred>
+constexpr int indexif = [](this auto const & sf, auto i) -> int {
+    if constexpr (i >= len<L>) return -1; else return Pred<ref<L, i>>::value ? i : sf(ic<i+1>);
+}(ic<0>);
+
 template <template <class ... A> class F, class L> struct apply_;
 template <template <class ... A> class F, class ... L> struct apply_<F, list<L ...>> { using type = F<L ...>; };
 template <template <class ... A> class F, class L> using apply = apply_<F, L>::type;
@@ -123,34 +137,6 @@ template <template <class ... A> class F, class ... L> struct map_ { using type 
 template <template <class ... A> class F, class ... L> struct map_<F, list<>, L ...> { using type = list<>; };
 template <template <class ... A> class F> struct map_<F> { using type = list<>; };
 template <template <class ... A> class F, class ... L> using map = map_<F, L ...>::type;
-
-template <class A, class T, int i=0> struct index_ { using type = ic_t<-1>; }; // not found case
-template <class A, class T, int i=0> using index = index_<A, T, i>::type;
-template <class ... A, class T, int i> struct index_<list<T, A ...>, T, i> { using type = ic_t<i>; };
-template <class A0, class ... A, class T, int i> struct index_<list<A0, A ...>, T, i> { using type = index<list<A ...>, T, i+1>; };
-
-// not found case
-template <class A, template <class> class Pred, int i=0>
-struct indexif
-{
-    constexpr static int value = -1;
-    using type = list<>;
-};
-template <class A0, class ... A, template <class> class Pred, int i>
-requires (Pred<A0>::value)
-struct indexif<list<A0, A ...>, Pred, i>
-{
-    using type = A0;
-    constexpr static int value = i;
-};
-template <class A0, class ... A, template <class> class Pred, int i>
-requires (!(Pred<A0>::value))
-struct indexif<list<A0, A ...>, Pred, i>
-{
-    using next = indexif<list<A ...>, Pred, i+1>;
-    using type = next::type;
-    constexpr static int value = next::value;
-};
 
 template <class A, class Val> struct findtail_;
 template <class A, class Val> using findtail = findtail_<A, Val>::type;
@@ -232,15 +218,14 @@ template <class C, class R> constexpr int permsignfound<-1, C, R>  = 0;
 template <> struct permsign<list<>, list<>> { constexpr static int value = 1; };
 template <class C> struct permsign<C, list<>> { constexpr static int value = 0; };
 template <class R> struct permsign<list<>, R> { constexpr static int value = 0; };
-template <class C, class R> struct permsign { constexpr static int value = permsignfound<index<C, first<R>>::value, C, R>; };
+template <class C, class R> struct permsign { constexpr static int value = permsignfound<index<C, first<R>>, C, R>; };
 
 template <class P, class Plist>
 struct findcomb
 {
     template <class A> using match = ic_t<0 != permsign<P, A>::value>;
-    using ii = indexif<Plist, match>;
-    constexpr static int where = ii::value;
-    constexpr static int sign = (where>=0) ? permsign<P, typename ii::type>::value : 0;
+    constexpr static int where = indexif<Plist, match>;
+    constexpr static int sign = []{ if constexpr (where>=0) return permsign<P, ref<Plist, where>>::value; else return 0; }();
 };
 
 // Combination aC complementary to C wrt [0, 1, ... Dim-1], permuted so [C, aC] has the sign of [0, 1, ... Dim-1].
