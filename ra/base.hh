@@ -138,12 +138,6 @@ template <template <class ... A> class F, class ... L> struct map_<F, list<>, L 
 template <template <class ... A> class F> struct map_<F> { using type = list<>; };
 template <template <class ... A> class F, class ... L> using map = map_<F, L ...>::type;
 
-template <class A, class Val> struct findtail_;
-template <class A, class Val> using findtail = findtail_<A, Val>::type;
-template <class Val> struct findtail_<list<>, Val> { using type = list<>; };
-template <class ... A, class Val> struct findtail_<list<Val, A ...>, Val> { using type = list<Val, A ...>; };
-template <class A0, class ... A, class Val> struct findtail_<list<A0, A ...>, Val> { using type = findtail<list<A ...>, Val>; };
-
 template <class A, class B> struct reverse_ { using type = B; };
 template <class A, class B=list<>> using reverse = reverse_<A, B>::type;
 template <class A0, class ... A, class B> struct reverse_<list<A0, A ...>, B> { using type = reverse<list<A ...>, cons<A0, B>>; };
@@ -178,25 +172,7 @@ struct complement_list_
     }());
 };
 
-// Like complement_list, but both lists are sorted.
-template <class S, class T> struct complement_sorted_list_;
-template <class S, class T> using complement_sorted_list = complement_sorted_list_<S, T>::type;
-template <class S, class T>
-struct complement_sorted_list_
-{
-    using type = decltype([]{
-        if constexpr (0==len<S> || 0==len<T>) {
-            return T {};
-        } else if constexpr (std::is_same_v<first<S>, first<T>>) {
-            return complement_sorted_list<rest<S>, rest<T>> {};
-        } else {
-            static_assert(first<T>::value < first<S>::value, "Bad complement_sorted_list.");
-            return cons<first<T>, complement_sorted_list<S, rest<T>>> {};
-        }
-    }());
-};
-
-template <class S, int end> using complement = complement_sorted_list<S, iota<end>>;
+template <class S, int end> using complement = complement_list<S, iota<end>>;
 
 // K-combinations of the N elements of list A.
 template <class A, int K> struct combs_;

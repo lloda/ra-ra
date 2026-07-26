@@ -44,7 +44,7 @@ Check the manual at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra), or h
 
 * array types with arbitrary compile time or runtime rank and shape
 * memory owning types, views over memory, sequence views
-* compatibility with built-in arrays and with the standard library, including ranges, streams, and `<format>`
+* support for standard features, including builtin arrays, ranges, streams, `<format>`, and structured binding
 * generalized slicing with indices of arbitrary rank and contextual `len`
 * rank extension by prefix matching, as in APL/J, for functions of any number of arguments
 * iterators over subarrays (cells) of any rank
@@ -53,7 +53,7 @@ Check the manual at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra), or h
 * operators to select from argument list (`where`, `pick`)
 * view operations: reshape, transpose, reverse, collapse/explode, stencils
 * arbitrary types as array elements, or as scalar operands
-* many predefined array operations; adding yours is trivial
+* many predefined array operations; adding new ones is trivial
 * configurable error handling
 * as much `constexpr` as possible.
 
@@ -82,13 +82,13 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 
 #### Motivation
 
-I do numerical work in C++, and I need support for array operations. The built-in array types that C++ inherits from C are insufficient, so at the time of C++11 when I started writing **ra-ra**, a number of libraries were already available. However, most of these libraries seemed to support only vectors and matrices, or small objects for vector algebra.
+The built-in array types that C++ inherits from C are insufficient for numeical work, so at the time of C++11 when I started writing **ra-ra**, a number of like libraries were already available. However, most of these libraries supported only vectors and matrices, or small objects for vector algebra.
 
 Blitz++ was a major inspiration as an early *generic* library. But it was a heroic feat to write such a library in C++ in the late 90s. Variadic templates, lambdas, perfect forwarding, etc. make things much easier, for the library writer as well as for the user.
 
 From APL and J I've taken the rank extension mechanism, as well as an inclination for carrying each feature to its logical end.
 
-I want **ra-ra** to remain simple. I try not to second-guess the compiler and I don't fret over performance as much as Blitz++ did. However, I'll avoid features that could become an obstacle if I ever tried to make things fast(er). It should be possible to implement new traversal methods, or perhaps optimize specific expression patterns, without having to turn the library inside out.
+I want **ra-ra** to remain simple. I try not to second-guess the compiler and I don't fret over performance as much as Blitz++ did. However, it should be possible to implement new traversal methods, or perhaps optimize specific expression patterns, without having to turn the library inside out.
 
 #### Other C++ array libraries
 

@@ -110,6 +110,30 @@ template <class A, class B> struct prodappend_ { using type = list<>; };
 template <class A, class B> using prodappend = prodappend_<A, B>::type;
 template <class A0, class ... A, class B> struct prodappend_<list<A0, A ...>, B> { using type = append<mapprepend<A0, B>, prodappend<list<A ...>, B>>; };
 
+template <class A, class Val> struct findtail_;
+template <class A, class Val> using findtail = findtail_<A, Val>::type;
+template <class Val> struct findtail_<list<>, Val> { using type = list<>; };
+template <class ... A, class Val> struct findtail_<list<Val, A ...>, Val> { using type = list<Val, A ...>; };
+template <class A0, class ... A, class Val> struct findtail_<list<A0, A ...>, Val> { using type = findtail<list<A ...>, Val>; };
+
+// Like complement_list, but both lists are sorted.
+template <class S, class T> struct complement_sorted_list_;
+template <class S, class T> using complement_sorted_list = complement_sorted_list_<S, T>::type;
+template <class S, class T>
+struct complement_sorted_list_
+{
+    using type = decltype([]{
+        if constexpr (0==len<S> || 0==len<T>) {
+            return T {};
+        } else if constexpr (std::is_same_v<first<S>, first<T>>) {
+            return complement_sorted_list<rest<S>, rest<T>> {};
+        } else {
+            static_assert(first<T>::value < first<S>::value, "Bad complement_sorted_list.");
+            return cons<first<T>, complement_sorted_list<S, rest<T>>> {};
+        }
+    }());
+};
+
 } // namespace ra::mp
 
 int main()
@@ -142,7 +166,7 @@ int main()
         tr.test_eq(4, z1);
 #if __cpp_structured_bindings >= 202411L // 'can introduce a pack'
         auto f1 = []<class L>(L) { const /* hmm */ auto [... i] = ra::mp::list2tuple<L> {}; return ra::Small<int, sizeof...(i)> { i ... }; };
-        auto f2 = []<class L>(L) { constexpr auto [... i] = L {}; return ra::Small<int, sizeof...(i)> { i ... }; };
+        auto f2 = [](auto l) { constexpr auto [... i] = l; return ra::Small<int, sizeof...(i)> { i ... }; };
         tr.strict().test_eq(ra::Small<int, 2> { 3, 4 }, f1(ra::ilist<3, 4>));
         tr.strict().test_eq(ra::Small<int, 2> { 3, 4 }, f2(ra::ilist<3, 4>));
 #endif
