@@ -1800,7 +1800,7 @@ However, if you want to mix arbitrary types in array operations, you'll need to 
 
 @example
 @verbatim
-template <> constexpr bool ra::is_scalar_def<W> = true;
+template <> constexpr inline bool ra::is_scalar_def<W> = true;
 ...
 W ww {11};
 for_each([](auto && x, auto && y) { cout << (x.x + y.y) << " "; }, w, ww); // ok

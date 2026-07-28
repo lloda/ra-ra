@@ -404,7 +404,7 @@ Next: <a href="#Arrays-and-views" accesskey="n" rel="next">Arrays and views</a>,
 int main()
 {
     ra::Big&lt;char, 2&gt; A({2, 5}, &quot;helloworld&quot;);
-    std::print(stdout, &quot;{:nS{|}{\n}}\n&quot;, transpose(A)); // see Formatted output
+    std::print(stdout, &quot;{:nS{|}{\n}:c}\n&quot;, transpose(A)); // see Formatted output
 }
 </pre><pre class="example">-| h|w
    e|o
@@ -1598,7 +1598,7 @@ ra::ptr(z, 3) += p; // ok, shapes must agree
 <span id="x_002dis_002dscalar"></span><p>Some types are accepted automatically as scalars in mixed array/scalar operations. These include all types that satisfy <code>std::is_floating_point_v</code>, such as <code>double</code> or (if available) <code>std::float128_t</code>; <code>std::complex&lt;T&gt;</code> for any <code>T</code>; and non-pointer types that satisfy <code>std::is_scalar_v</code>, such as <code>char</code> or <code>int</code>. You can add your own types to this list with the following declaration:
 </p>
 <blockquote>
-<pre class="verbatim">template &lt;&gt; constexpr bool ra::is_scalar_def&lt;MYTYPE&gt; = true;
+<pre class="verbatim">template &lt;&gt; constexpr inline bool ra::is_scalar_def&lt;MYTYPE&gt; = true;
 </pre></blockquote>
 
 <p>Otherwise, you can bring a scalar object into <code>ra::</code> on the spot, with the function <a href="#x_002dscalar"><code>scalar</code></a>.
@@ -1818,7 +1818,7 @@ cout &lt;&lt; amin(map([](auto &amp;&amp; x) { return w.x; }, w)) &lt;&lt; endl;
 <p>However, if you want to mix arbitrary types in array operations, you&rsquo;ll need to tell <code>ra::</code> that that is actually what you want. This is to avoid conflicts with other libraries.
 </p>
 <div class="example">
-<pre class="verbatim">template &lt;&gt; constexpr bool ra::is_scalar_def&lt;W&gt; = true;
+<pre class="verbatim">template &lt;&gt; constexpr inline bool ra::is_scalar_def&lt;W&gt; = true;
 ...
 W ww {11};
 for_each([](auto &amp;&amp; x, auto &amp;&amp; y) { cout &lt;&lt; (x.x + y.y) &lt;&lt; &quot; &quot;; }, w, ww); // ok

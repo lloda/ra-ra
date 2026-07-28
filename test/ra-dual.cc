@@ -18,10 +18,10 @@ using complex = std::complex<double>;
 using ra::dual, ra::Dual, ra::sqr;
 
 // not needed to put Dual<> in containers, but needed to use Dual<>s by themselves as expr terms.
-template <class T> constexpr bool ra::is_scalar_def<Dual<T>> = true;
+template <class T> constexpr inline bool ra::is_scalar_def<Dual<T>> = true;
 
 #define DEFINE_CASE(N,  F, DF)                                          \
-    struct RA_JOIN(case, N)                                                \
+    struct RA_JOIN(case, N)                                             \
     {                                                                   \
         template <class X> static auto f(X x) { return (F); }           \
         template <class X> static auto df(X x) { return (DF); }         \

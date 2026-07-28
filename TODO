@@ -55,6 +55,8 @@ checkbox [C-ct] flip TODO
         main obstacle atm seems to be the need to support copy. <2023-11-20 Mon 12:45>
       - One can now create a ravel iterator from an Iterator <2023-11-28 Tue 16:37>
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down a Map??
+      - [X] works in some cases (see ra.hh / test/reduction.cc)
+      - [ ] works in all cases?
     - [ ] port some of the View ops to generic Iterator. reverse, transpose, etc. seem easy
       enough. Only it kind of bothers me that they need their own Map-like types while on Views
       it's just a one time op. Propagating ops down Map into leaf Views (a kind of beating) would

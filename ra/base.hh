@@ -117,7 +117,7 @@ template <class L, int n> using take = take_<L, n>::type;
 
 template <class L, int ... I> struct ref_ { using type = L; };
 template <class L, int ... I> using ref = ref_<L, I ...>::type;
-template <class L, int I0, int ... I> struct ref_<L, I0, I ...> { using type = ref<first<drop<L, I0>>, I ...>; }; // FIXME c++26
+template <class L, int I0, int ... I> struct ref_<L, I0, I ...> { using type = ref<first<drop<L, I0>>, I ...>; }; // c++26
 
 template <class L, class T>
 constexpr int index = [](this auto const & sf, auto i) -> int {
@@ -293,7 +293,7 @@ constexpr struct Len
 template <class E> struct WLen; // defined in ply.hh. FIXME C++ p2481
 template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FW(e)); };
 RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
-template <has_len E> constexpr bool is_special_def<E> = true;
+template <has_len E> constexpr inline bool is_special_def<E> = true;
 
 template <class A>
 concept Iterator = requires (A a, rank_t k, dim_t d, rank_t i)
