@@ -10,7 +10,6 @@
 #pragma once
 #include "arrays.hh"
 #include <cmath>
-#include <complex>
 
 // ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
 template <int A> constexpr void iter(ra::noarg<>);
@@ -21,7 +20,6 @@ template <class T> constexpr void cast(ra::noarg<>);
 // Scalar overloads.
 // ---------------------------
 
-#define RA_FLOAT128 (1==__STDCPP_FLOAT128_T__ && defined(_GLIBCXX_HAVE_FLOAT128_MATH))
 #if RA_FLOAT128
     #include <stdfloat>
 #define RA_FLOATS float, double, std::float128_t

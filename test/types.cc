@@ -250,15 +250,43 @@ int main()
         cout << ra::ptr(ra::Seq {0}, 10) << endl;
         cout << ra::ptr(ra::Seq {3.}, 8) << endl;
     }
-    tr.section("mixed float128/double ops");
-    {
 #if RA_FLOAT128
-        tr.test_eq(9., real(std::complex<std::float128_t>(3.) * 3.));
-        tr.test_eq(9., real(std::complex<double>(3.) * std::float128_t(3.)));
+    tr.section("ostream << float128/double ops + std::format(std::complex<std::float128_t>) when ");
+    {
+#if !defined(__cpp_lib_tuple_like) || (__cplusplus < 202600L)
+        cout << "Using ra-ra support for std::format(std::complex<std::float128_t>)" << endl;
 #else
-        std::println(std::cout, "no float128_t support!");
-#endif // RA_FLOAT128
+        cout << "Using system support for std::format(std::complex<std::float128_t>)" << endl;
+#endif
+        {
+            std::ostringstream o;
+            o << std::float128_t(3.);
+            tr.strict().test_eq(std::string("3"), o.str());
+            tr.strict().test_eq(std::string("3"), std::format("{}", 3));
+        }
+        {
+            std::ostringstream o;
+            o << std::complex<std::float128_t>{3., 4.};
+            tr.strict().test_eq(std::string("(3,4)"), o.str());
+            tr.strict().test_eq(std::string("(3,4)"), std::format("{}", std::complex<std::float128_t>{3., 4.}));
+            tr.strict().test_eq(std::string("(3,4)"), ra::format(std::complex<std::float128_t>{3., 4.}));
+        }
+        {
+            std::ostringstream o;
+            ra::Small<std::complex<std::float128_t>, 2> ref = {{3., 4.}, {5., 6.}};
+            o << ref;
+            tr.strict().test_eq(std::string("(3,4) (5,6)"), o.str());
+            tr.strict().test_eq(std::string("(3,4) (5,6)"), std::format("{}", ref));
+            tr.strict().test_eq(std::string("(3,4) (5,6)"), ra::format(ref));
+        }
     }
+    {
+        std::complex<std::float128_t> z{1.5, -2.25};
+        std::cout << ra::format(z) << std::endl;
+    }
+#else
+    std::println(std::cout, "no float128_t support! 1 sections skipped.");
+#endif // RA_FLOAT128
     tr.section("zero rank arrays");
     {
         static_assert(ra::is_builtin<decltype((ra::dim_t[1]){})>);

@@ -15,6 +15,7 @@
 #include <format>
 #include <limits>
 #include <string>
+#include <complex>
 #include <sstream>
 #include <version>
 #include <cstdint>
@@ -57,6 +58,15 @@
 #ifndef RA_OPT_SMALL
 #define RA_OPT_SMALL 0
 #endif
+
+#define RA_FLOAT128 (1==__STDCPP_FLOAT128_T__ && defined(_GLIBCXX_HAVE_FLOAT128_MATH))
+#if RA_FLOAT128
+#include <stdfloat>
+// float128_t has no ostream operator, and complex<float128_t>'s std::operator<< streams the _Float128 parts, which fails with ambiguous conversion.
+// These overloads are not seen inside ra::, because ra:: also defines operator<<; unqualified lookup looks no further, and ADL only in std::. But ra:: handles these types through std::format (std::float128_t in stdlib; std::complex<std::float128_t> in ply.hh for the time being).
+inline std::ostream & operator<<(std::ostream & o, std::float128_t const & r) { std::print(o, "{}", r); return o; }
+inline std::ostream & operator<<(std::ostream & o, std::complex<std::float128_t> const & z) { std::print(o, "({},{})", z.real(), z.imag()); return o; }
+#endif // RA_FLOAT128
 
 namespace ra {
 

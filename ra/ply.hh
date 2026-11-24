@@ -707,3 +707,24 @@ struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
         return std::formatter<decltype(ra::iter(f.a))>().format(ra::iter(f.a), ctx, f.f);
     }
 };
+
+// FIXME waiting for system libraries...
+#if !defined(__cpp_lib_tuple_like) || (__cplusplus < 202600L)
+template <class CharT>
+struct std::formatter<std::complex<std::float128_t>, CharT>: std::formatter<std::float128_t, CharT>
+{
+    constexpr auto
+    format(std::complex<std::float128_t> const & c, auto & ctx) const
+    {
+        auto out = ctx.out();
+        *out++ = CharT('(');
+        ctx.advance_to(out);
+        out = std::formatter<std::float128_t, CharT>::format(c.real(), ctx);
+        *out++ = CharT(',');
+        ctx.advance_to(out);
+        out = std::formatter<std::float128_t, CharT>::format(c.imag(), ctx);
+        *out++ = CharT(')');
+        return out;
+    }
+};
+#endif
