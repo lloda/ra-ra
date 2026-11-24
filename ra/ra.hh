@@ -21,7 +21,6 @@ template <class T> constexpr void cast(ra::noarg<>);
 // ---------------------------
 
 #if RA_FLOAT128
-    #include <stdfloat>
 #define RA_FLOATS float, double, std::float128_t
 #define RA_OP_QUAD_DOUBLE(OP, R, C)                                     \
     constexpr C operator OP(C const & x, double y) { return x OP R(y); } \
@@ -30,6 +29,7 @@ template <class T> constexpr void cast(ra::noarg<>);
     constexpr C operator OP(std::complex<double> const & x, C const & y) { return C(x) OP y; }
 #define RA_QUAD_DOUBLE(OP) RA_OP_QUAD_DOUBLE(OP, std::float128_t, std::complex<std::float128_t>)
 RA_FE(RA_QUAD_DOUBLE, +, -, /, *)
+namespace ra { RA_FE(RA_QUAD_DOUBLE, +, -, /, *) } // ra:: declares other operator* so doesn't see the global ones through UNL.
 #undef RA_QUAD_DOUBLE_OP
 #undef RA_OP_QUAD_DOUBLE_OP
 #else
@@ -55,6 +55,15 @@ RA_FE(RA_FOR_FLOAT, RA_FLOATS)
 #undef RA_FOR_FLOAT
 
 namespace ra {
+
+// We need to use these instead of std::multiplies<void> etc. because that can't find the global mixed-type operators that we've defined above for std::float128_t and its complex.
+#define RA_ELEM_OP(NAME, OP)                                            \
+    struct NAME { constexpr static auto operator()(auto && a, auto && b) { return RA_FW(a) OP RA_FW(b); } };
+RA_ELEM_OP(plus, +)
+RA_ELEM_OP(minus, -)
+RA_ELEM_OP(multiplies, *)
+RA_ELEM_OP(divides, /)
+#undef RA_ELEM_OP
 
 constexpr bool odd(unsigned int N) { return N & 1; }
 
@@ -127,14 +136,14 @@ template <class X> concept seqv1 = (1==rank_s<X>() && requires (X a) { []<class 
 #define RA_BINOP_I(OP, A, B, VAL) \
     template <A I, B J> constexpr auto opt(Map<OP, std::tuple<I, J>> && e) { return VAL; }
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
-RA_BINOP_I(std::plus<>,       seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).c.cp.i+RAI(1), RAI(0).dimv[0].step))
-RA_BINOP_I(std::plus<>,       seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)+RAI(1).c.cp.i, RAI(1).dimv[0].step))
-RA_BINOP_I(std::plus<>,       seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).c.cp.i+RAI(1).c.cp.i, cadd(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
-RA_BINOP_I(std::minus<>,      seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).c.cp.i-RAI(1), RAI(0).dimv[0].step))
-RA_BINOP_I(std::minus<>,      seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)-RAI(1).c.cp.i, csub(ic<0>, RAI(1).dimv[0].step)))
-RA_BINOP_I(std::minus<>,      seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).c.cp.i-RAI(1).c.cp.i, csub(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
-RA_BINOP_I(std::multiplies<>, seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).c.cp.i*RAI(1), RAI(0).dimv[0].step*RAI(1)))
-RA_BINOP_I(std::multiplies<>, seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)*RAI(1).c.cp.i, RAI(0)*RAI(1).dimv[0].step))
+RA_BINOP_I(plus,       seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).c.cp.i+RAI(1), RAI(0).dimv[0].step))
+RA_BINOP_I(plus,       seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)+RAI(1).c.cp.i, RAI(1).dimv[0].step))
+RA_BINOP_I(plus,       seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).c.cp.i+RAI(1).c.cp.i, cadd(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
+RA_BINOP_I(minus,      seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).c.cp.i-RAI(1), RAI(0).dimv[0].step))
+RA_BINOP_I(minus,      seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)-RAI(1).c.cp.i, csub(ic<0>, RAI(1).dimv[0].step)))
+RA_BINOP_I(minus,      seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).c.cp.i-RAI(1).c.cp.i, csub(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
+RA_BINOP_I(multiplies, seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).c.cp.i*RAI(1), RAI(0).dimv[0].step*RAI(1)))
+RA_BINOP_I(multiplies, seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)*RAI(1).c.cp.i, RAI(0)*RAI(1).dimv[0].step))
 #undef RA_BINOP_I
 
 template <seqv1 I> constexpr auto
@@ -155,10 +164,10 @@ template <class T, dim_t N, class A> constexpr bool match_small =
     }
 #define RA_OPT_SMALL_OP_FUNS(T, N)                                      \
     static_assert(0==alignof(ra::Small<T, N>) % alignof(extvector<T, N>)); \
-    RA_OPT_SMALL_OP(+, std::plus<>, T, N)                               \
-    RA_OPT_SMALL_OP(-, std::minus<>, T, N)                              \
-    RA_OPT_SMALL_OP(/, std::divides<>, T, N)                            \
-    RA_OPT_SMALL_OP(*, std::multiplies<>, T, N)
+    RA_OPT_SMALL_OP(+, plus, T, N)                                      \
+    RA_OPT_SMALL_OP(-, minus, T, N)                                     \
+    RA_OPT_SMALL_OP(/, divides, T, N)                                   \
+    RA_OPT_SMALL_OP(*, multiplies, T, N)
 #define RA_OPT_SMALL_OP_TYPES(N)                \
     RA_OPT_SMALL_OP_FUNS(int32_t, N)            \
     RA_OPT_SMALL_OP_FUNS(float, N)              \
@@ -181,11 +190,10 @@ RA_FE(RA_OPT_SMALL_OP_TYPES, 2, 4, 8)
         operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FW(a), RA_FW(b))); } \
     template <class A, class B> requires (toreduce<A, B>) constexpr auto \
         operator OP(A && a, B && b) { return VAL(RA_FW(a)) OP VAL(RA_FW(b)); }
-RA_BINOP(+, std::plus<>)      RA_BINOP(-, std::minus<>)       RA_BINOP(*, std::multiplies<>)
-RA_BINOP(/, std::divides<>)   RA_BINOP(==, std::equal_to<>)   RA_BINOP(<=, std::less_equal<>)
-RA_BINOP(<, std::less<>)      RA_BINOP(>, std::greater<>)     RA_BINOP(>=, std::greater_equal<>)
-RA_BINOP(|, std::bit_or<>)    RA_BINOP(&, std::bit_and<>)     RA_BINOP(!=, std::not_equal_to<>)
-RA_BINOP(^, std::bit_xor<>)   RA_BINOP(%, std::modulus<>)     RA_BINOP(<=>, std::compare_three_way)
+RA_BINOP(+, plus)        RA_BINOP(|, std::bit_or<>)   RA_BINOP(<, std::less<>)            RA_BINOP(==, std::equal_to<>)
+RA_BINOP(-, minus)       RA_BINOP(&, std::bit_and<>)  RA_BINOP(>, std::greater<>)         RA_BINOP(!=, std::not_equal_to<>)
+RA_BINOP(*, multiplies)  RA_BINOP(^, std::bit_xor<>)  RA_BINOP(>=, std::greater_equal<>)  RA_BINOP(<=>, std::compare_three_way)
+RA_BINOP(/, divides)     RA_BINOP(%, std::modulus<>)  RA_BINOP(<=, std::less_equal<>)
 #undef RA_BINOP
 
 // FIXME sanitizer complains in bench-optimize.cc with std::identity. False positive?

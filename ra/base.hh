@@ -63,7 +63,7 @@
 #if RA_FLOAT128
 #include <stdfloat>
 // float128_t has no ostream operator, and complex<float128_t>'s std::operator<< streams the _Float128 parts, which fails with ambiguous conversion.
-// These overloads are not seen inside ra::, because ra:: also defines operator<<; unqualified lookup looks no further, and ADL only in std::. But ra:: handles these types through std::format (std::float128_t in stdlib; std::complex<std::float128_t> in ply.hh for the time being).
+// ra:: defines other operator<<, so UNL from ra:: doesn't see these. It handles these types through std::format (std::float128_t in stdlib; std::complex<std::float128_t> in ply.hh for the time being).
 inline std::ostream & operator<<(std::ostream & o, std::float128_t const & r) { std::print(o, "{}", r); return o; }
 inline std::ostream & operator<<(std::ostream & o, std::complex<std::float128_t> const & z) { std::print(o, "({},{})", z.real(), z.imag()); return o; }
 #endif // RA_FLOAT128

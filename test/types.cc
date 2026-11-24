@@ -250,7 +250,32 @@ int main()
         cout << ra::ptr(ra::Seq {0}, 10) << endl;
         cout << ra::ptr(ra::Seq {3.}, 8) << endl;
     }
+    tr.section("zero rank arrays");
+    {
+        static_assert(ra::is_builtin<decltype((ra::dim_t[1]){})>);
+        static_assert(ra::is_builtin<decltype((ra::dim_t[0]){})>);
+        static_assert(1==ra::rank_s((ra::dim_t[1]){}));
+        static_assert(1==ra::rank_s((ra::dim_t[0]){}));
+        static_assert(1==ra::size_s((ra::dim_t[1]){}));
+        static_assert(0==ra::size_s((ra::dim_t[0]){}));
+        int z[0];
+        static_assert(1==ra::rank_s(z));
+        static_assert(0==ra::size_s(z));
+        static_assert(1==ra::rank(z));
+        static_assert(0==ra::size(z));
+    }
 #if RA_FLOAT128
+    tr.section("mixed float128/double ops");
+    {
+        tr.test_eq(9., real(std::complex<std::float128_t>(3.) * 3.));
+        tr.test_eq(9., real(std::complex<double>(3.) * std::float128_t(3.)));
+    }
+    tr.section("mixed float128/double ops in expressions");
+    {
+        ra::Small<std::complex<double>, 2> ref = {9, 12};
+        tr.strict().test_eq(ref, cast<std::complex<double>>(ra::Small<std::complex<std::float128_t>, 2>{3., 4.} * 3.));
+        tr.strict().test_eq(ref, cast<std::complex<double>>(std::complex<double>(3.) * ra::Small<std::float128_t, 2>{3., 4.}));
+    }
     tr.section("ostream << float128/double ops + std::format(std::complex<std::float128_t>) when ");
     {
 #if !defined(__cpp_lib_tuple_like) || (__cplusplus < 202600L)
@@ -263,6 +288,7 @@ int main()
             o << std::float128_t(3.);
             tr.strict().test_eq(std::string("3"), o.str());
             tr.strict().test_eq(std::string("3"), std::format("{}", 3));
+            tr.strict().test_eq(std::string("0.3333333333333333333333333333333333"), ra::format(std::float128_t(1.)/3));
         }
         {
             std::ostringstream o;
@@ -285,21 +311,7 @@ int main()
         std::cout << ra::format(z) << std::endl;
     }
 #else
-    std::println(std::cout, "no float128_t support! 1 sections skipped.");
+    std::println(std::cout, "no float128_t support! some tests skipped.");
 #endif // RA_FLOAT128
-    tr.section("zero rank arrays");
-    {
-        static_assert(ra::is_builtin<decltype((ra::dim_t[1]){})>);
-        static_assert(ra::is_builtin<decltype((ra::dim_t[0]){})>);
-        static_assert(1==ra::rank_s((ra::dim_t[1]){}));
-        static_assert(1==ra::rank_s((ra::dim_t[0]){}));
-        static_assert(1==ra::size_s((ra::dim_t[1]){}));
-        static_assert(0==ra::size_s((ra::dim_t[0]){}));
-        int z[0];
-        static_assert(1==ra::rank_s(z));
-        static_assert(0==ra::size_s(z));
-        static_assert(1==ra::rank(z));
-        static_assert(0==ra::size(z));
-    }
     return tr.summary();
 }
