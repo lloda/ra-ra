@@ -95,9 +95,9 @@ int main()
         TESTPRED(std::complex<double>,
                  false, false, false, true, false);
 #if RA_FLOAT128
-        TESTPRED(std::float128_t,
+        TESTPRED(ra::f128,
                  false, false, false, true, false);
-        TESTPRED(std::complex<std::float128_t>,
+        TESTPRED(ra::c128,
                  false, false, false, true, false);
 #endif // RA_FLOAT128
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()),
@@ -265,41 +265,41 @@ int main()
         static_assert(0==ra::size(z));
     }
 #if RA_FLOAT128
-    tr.section("mixed float128/double ops");
+    tr.section("mixed f128/double ops");
     {
-        tr.test_eq(9., std::complex<double>(std::complex<std::float128_t>(3.) * 3.));
-        tr.test_eq(9., std::complex<double>(std::complex<double>(3.) * std::float128_t(3.)));
+        tr.test_eq(9., std::complex<double>(ra::c128(3.) * 3.));
+        tr.test_eq(9., std::complex<double>(std::complex<double>(3.) * ra::f128(3.)));
     }
-    tr.section("mixed float128/double ops in expressions");
+    tr.section("mixed f128/double ops in expressions");
     {
         ra::Small<std::complex<double>, 2> ref = {9, 12};
-        tr.strict().test_eq(ref, cast<std::complex<double>>(ra::Small<std::complex<std::float128_t>, 2>{3., 4.} * 3.));
-        tr.strict().test_eq(ref, cast<std::complex<double>>(std::complex<double>(3.) * ra::Small<std::float128_t, 2>{3., 4.}));
+        tr.strict().test_eq(ref, cast<std::complex<double>>(ra::Small<ra::c128, 2>{3., 4.} * 3.));
+        tr.strict().test_eq(ref, cast<std::complex<double>>(std::complex<double>(3.) * ra::Small<ra::f128, 2>{3., 4.}));
     }
-    tr.section("ostream << float128/double ops + std::format(std::complex<std::float128_t>) when ");
+    tr.section("ostream << f128/double ops + std::format(c128) when ");
     {
 #if !defined(__cpp_lib_tuple_like) || (__cplusplus < 202600L)
-        cout << "Using ra-ra support for std::format(std::complex<std::float128_t>)" << endl;
+        cout << "Using ra-ra support for std::format(c128)" << endl;
 #else
-        cout << "Using system support for std::format(std::complex<std::float128_t>)" << endl;
+        cout << "Using system support for std::format(c128)" << endl;
 #endif
         {
             std::ostringstream o;
-            o << std::float128_t(3.);
+            o << ra::f128(3.);
             tr.strict().test_eq(std::string("3"), o.str());
             tr.strict().test_eq(std::string("3"), std::format("{}", 3));
-            tr.strict().test_eq(std::string("0.3333333333333333333333333333333333"), ra::format(std::float128_t(1.)/3));
+            tr.strict().test_eq(std::string("0.3333333333333333333333333333333333"), ra::format(ra::f128(1.)/3));
         }
         {
             std::ostringstream o;
-            o << std::complex<std::float128_t>{3., 4.};
+            o << ra::c128{3., 4.};
             tr.strict().test_eq(std::string("(3,4)"), o.str());
-            tr.strict().test_eq(std::string("(3,4)"), std::format("{}", std::complex<std::float128_t>{3., 4.}));
-            tr.strict().test_eq(std::string("(3,4)"), ra::format(std::complex<std::float128_t>{3., 4.}));
+            tr.strict().test_eq(std::string("(3,4)"), std::format("{}", ra::c128{3., 4.}));
+            tr.strict().test_eq(std::string("(3,4)"), ra::format(ra::c128{3., 4.}));
         }
         {
             std::ostringstream o;
-            ra::Small<std::complex<std::float128_t>, 2> ref = {{3., 4.}, {5., 6.}};
+            ra::Small<ra::c128, 2> ref = {{3., 4.}, {5., 6.}};
             o << ref;
             tr.strict().test_eq(std::string("(3,4) (5,6)"), o.str());
             tr.strict().test_eq(std::string("(3,4) (5,6)"), std::format("{}", ref));
@@ -307,11 +307,11 @@ int main()
         }
     }
     {
-        std::complex<std::float128_t> z{1.5, -2.25};
+        ra::c128 z{1.5, -2.25};
         std::cout << ra::format(z) << std::endl;
     }
 #else
-    std::println(std::cout, "no float128_t support! some tests skipped.");
+    std::println(std::cout, "no std::float128_t support! some tests skipped.");
 #endif // RA_FLOAT128
     return tr.summary();
 }

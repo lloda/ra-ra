@@ -21,13 +21,13 @@ template <class T> constexpr void cast(ra::noarg<>);
 // ---------------------------
 
 #if RA_FLOAT128
-#define RA_FLOATS float, double, std::float128_t
+#define RA_FLOATS float, double, ra::f128
 #define RA_OP_QUAD_DOUBLE(OP, R, C)                                     \
     constexpr C operator OP(C const & x, double y) { return x OP R(y); } \
     constexpr C operator OP(double x, C const & y) { return R(x) OP y; } \
     constexpr C operator OP(C const & x, std::complex<double> const & y) { return x OP C(y); } \
     constexpr C operator OP(std::complex<double> const & x, C const & y) { return C(x) OP y; }
-#define RA_QUAD_DOUBLE(OP) RA_OP_QUAD_DOUBLE(OP, std::float128_t, std::complex<std::float128_t>)
+#define RA_QUAD_DOUBLE(OP) RA_OP_QUAD_DOUBLE(OP, ra::f128, ra::c128)
 RA_FE(RA_QUAD_DOUBLE, +, -, /, *)
 namespace ra { RA_FE(RA_QUAD_DOUBLE, +, -, /, *) } // ra:: declares other operator* so doesn't see the global ones through UNL.
 #undef RA_QUAD_DOUBLE
@@ -56,7 +56,7 @@ RA_FE(RA_FOR_FLOAT, RA_FLOATS)
 
 namespace ra {
 
-// We need to use these instead of std::multiplies<void> etc. because that can't find the global mixed-type operators that we've defined above for std::float128_t and its complex.
+// Instead of std::multiplies<> etc. because those don't find the global mixed-type operators that we've defined above for f128/c128.
 #define RA_ELEM_OP(NAME, OP)                                            \
     struct NAME { constexpr static auto operator()(auto && a, auto && b) { return RA_FW(a) OP RA_FW(b); } };
 RA_ELEM_OP(plus, +)

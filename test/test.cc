@@ -76,6 +76,15 @@ int main()
         std::vector a = { 1., 2., 3. };
         tr.test_abs(ref, a, 0.);
     }
+#if RA_FLOAT128
+    tr.section("test support for float128_t");
+    {
+        tr.test_rel(ra::c128(1.), ra::c128(1.), 0.);
+        tr.test_rel(1.00000'00000'00000'00001f128, 1., 1e-19);
+    }
+#else
+    std::println(std::cout, "no float128_t support! some tests skipped.");
+#endif // RA_FLOAT128
 // works without -fno-finite-math-only because test_rel/abs use abs(amax_strict(...)) -> inf if amax_strict(...) returns -inf.
     tr.section("test_rel & nan");
     {

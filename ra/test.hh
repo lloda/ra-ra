@@ -180,9 +180,9 @@ struct TestRecorder
     static double
     nanny(auto && ref, auto && a, auto && err)
     {
-        return abs(amax_strict(where(isfinite(ref), RA_FW(err),
-                                     where(isinf(ref), where(ref==a, 0., PINF),
-                                           where(isnan(a), 0., PINF)))));
+        return double(amax_strict(abs(where(isfinite(ref), RA_FW(err),
+                                            where(isinf(ref), where(ref==a, 0., PINF),
+                                                  where(isnan(a), 0., PINF))))));
     }
     double
     test_rel(auto && ref_, auto && a_, double req, double level=0, RA_LOC)
