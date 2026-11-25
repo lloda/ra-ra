@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include "ra/test.hh"
+#include <print>
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
@@ -43,6 +44,13 @@ std::ostream & operator<<(std::ostream & o, Q && q)
 int main()
 {
     TestRecorder tr;
+// requires initializing under in std::formatter for arrays, else char-elements print as int. Revealed by gcc 16.
+    tr.section("use of under in std::formatter<ra::is_array_formattable>");
+    {
+        tr.test_eq(std::string("a b"), ra::format(ra::Small<char, 2> {'a', 'b'}));
+        tr.test_eq(std::string("0x61 0x62"), std::format("{::#x}", ra::Small<char, 2> {'a', 'b'}));
+        tr.test_eq(std::string("a b"), std::format("{}", ra::Small<char, 2> {'a', 'b'}));
+    }
     tr.section("common arrays or slices");
     {
         ra::Unique<int, 2> a({5, 3}, ra::_0 - ra::_1);

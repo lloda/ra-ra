@@ -30,8 +30,8 @@ template <class T> constexpr void cast(ra::noarg<>);
 #define RA_QUAD_DOUBLE(OP) RA_OP_QUAD_DOUBLE(OP, std::float128_t, std::complex<std::float128_t>)
 RA_FE(RA_QUAD_DOUBLE, +, -, /, *)
 namespace ra { RA_FE(RA_QUAD_DOUBLE, +, -, /, *) } // ra:: declares other operator* so doesn't see the global ones through UNL.
-#undef RA_QUAD_DOUBLE_OP
-#undef RA_OP_QUAD_DOUBLE_OP
+#undef RA_QUAD_DOUBLE
+#undef RA_OP_QUAD_DOUBLE
 #else
     #define RA_FLOATS float, double
 #endif // RA_FLOAT128

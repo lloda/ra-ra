@@ -618,6 +618,14 @@ struct std::formatter<A>
     std::conditional_t<std::formattable<ra::ncvalue_t<A>, char>,
                        std::formatter<ra::ncvalue_t<A>>, ra::ostream_formatter> under;
 
+// parse() only calls under.parse() after ':'. under's state may not be correct by default, so set it here.
+    constexpr
+    formatter()
+    {
+        std::format_parse_context empty { "}" };
+        under.parse(empty);
+    }
+
     constexpr auto
     parse(auto & ctx)
     {
@@ -698,8 +706,8 @@ struct std::formatter<A>
     constexpr auto format(A const & a, auto & ctx) const { return format(a, ctx, fmt); }
 };
 
-template <class A>
-struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
+template <class A, class CharT>
+struct std::formatter<ra::Fmt<A>, CharT>: std::formatter<std::basic_string_view<char>, CharT>
 {
     constexpr auto
     format(ra::Fmt<A> const & f, auto & ctx) const
@@ -708,7 +716,6 @@ struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
     }
 };
 
-// FIXME waiting for system libraries...
 #if !defined(__cpp_lib_tuple_like) || (__cplusplus < 202600L)
 template <class CharT>
 struct std::formatter<std::complex<std::float128_t>, CharT>: std::formatter<std::float128_t, CharT>
@@ -727,4 +734,4 @@ struct std::formatter<std::complex<std::float128_t>, CharT>: std::formatter<std:
         return out;
     }
 };
-#endif
+#endif // FIXME waiting for std::formatter<std::complex<T>>

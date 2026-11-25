@@ -267,8 +267,8 @@ int main()
 #if RA_FLOAT128
     tr.section("mixed float128/double ops");
     {
-        tr.test_eq(9., real(std::complex<std::float128_t>(3.) * 3.));
-        tr.test_eq(9., real(std::complex<double>(3.) * std::float128_t(3.)));
+        tr.test_eq(9., std::complex<double>(std::complex<std::float128_t>(3.) * 3.));
+        tr.test_eq(9., std::complex<double>(std::complex<double>(3.) * std::float128_t(3.)));
     }
     tr.section("mixed float128/double ops in expressions");
     {

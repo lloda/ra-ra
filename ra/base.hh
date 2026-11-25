@@ -62,8 +62,8 @@
 #define RA_FLOAT128 (1==__STDCPP_FLOAT128_T__ && defined(_GLIBCXX_HAVE_FLOAT128_MATH))
 #if RA_FLOAT128
 #include <stdfloat>
-// float128_t has no ostream operator, and complex<float128_t>'s std::operator<< streams the _Float128 parts, which fails with ambiguous conversion.
-// ra:: defines other operator<<, so UNL from ra:: doesn't see these. It handles these types through std::format (std::float128_t in stdlib; std::complex<std::float128_t> in ply.hh for the time being).
+// float128_t has no ostream operator, and complex<float128_t>'s std::operator<< uses << on the _Float128 parts, which fails with ambiguous conversion.
+// ra:: cannot see the global operators, but handles these types through std::format (std::float128_t in stdlib; std::complex<std::float128_t> in ply.hh for the time being)
 inline std::ostream & operator<<(std::ostream & o, std::float128_t const & r) { std::print(o, "{}", r); return o; }
 inline std::ostream & operator<<(std::ostream & o, std::complex<std::float128_t> const & z) { std::print(o, "({},{})", z.real(), z.imag()); return o; }
 #endif // RA_FLOAT128
