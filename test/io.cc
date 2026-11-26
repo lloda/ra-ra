@@ -41,15 +41,60 @@ std::ostream & operator<<(std::ostream & o, Q && q)
     return (o << q.x);
 }
 
+// A made-up range type with its own stream operator<<, in its own namespace (cf. sgf::Strat in ek).
+namespace ownns {
+
+struct Elem { int v; };
+
+inline std::ostream & operator<<(std::ostream & o, Elem const & e) { return o << "[elem " << e.v << "]"; }
+
+struct Range: public std::vector<Elem> {};
+
+inline std::ostream &
+operator<<(std::ostream & o, Range const & r)
+{
+    o << "[own ";
+    for (auto const & e: r) { o << e << ' '; }
+    return o << "]";
+}
+
+} // namespace ownns
+
+
+
 int main()
 {
     TestRecorder tr;
+    tr.section("types with their own operator<< don't use ra::'s array formatter");
+    {
+        ownns::Range r({{1},{2}});
+// not array-formattable.
+        tr.test_eq(false, ra::is_array_formattable<ownns::Range>);
+        tr.test_eq(false, std::formattable<ownns::Range, char>);
+// ra::print falls back to operator<<, is finds the one in ownns through ADL.
+        std::ostringstream o;
+        ra::print(o, r);
+        tr.test_eq(std::string("[own [elem 1] [elem 2] ]"), o.str());
+// can still use the array formatter explictily.
+        o.str(""); o << ra::fmt(ra::format_t{}, r);
+        tr.test_eq(std::string("2\n[elem 1] [elem 2]"), o.str());
+// types using the array formatter.
+        tr.test_eq(true, ra::is_array_formattable<ra::Small<int, 3>>);
+        tr.test_eq(true, ra::is_array_formattable<std::vector<int>>);
+        tr.test_eq(true, ra::is_array_formattable<std::vector<int, ra::default_init_allocator<int, std::allocator<int>>>>);
+        o.str(""); ra::print(o, std::vector<int> {1, 2, 3});
+        tr.test_eq(std::string("3\n1 2 3"), o.str());
+    }
 // requires initializing under in std::formatter for arrays, else char-elements print as int. Revealed by gcc 16.
     tr.section("use of under in std::formatter<ra::is_array_formattable>");
     {
         tr.test_eq(std::string("a b"), ra::format(ra::Small<char, 2> {'a', 'b'}));
         tr.test_eq(std::string("0x61 0x62"), std::format("{::#x}", ra::Small<char, 2> {'a', 'b'}));
         tr.test_eq(std::string("a b"), std::format("{}", ra::Small<char, 2> {'a', 'b'}));
+    }
+    tr.section("std::string &c. aren't formatted as arrays [ra13]");
+    {
+        tr.test_eq(std::string("abc"), ra::format(std::string_view("abc")));
     }
     tr.section("common arrays or slices");
     {

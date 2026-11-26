@@ -67,7 +67,7 @@ using f128 = std::float128_t;
 using c128 = std::complex<f128>;
 } // namespace ra
 // f128 has no ostream operator, and c128's std::operator<< uses << on the f128 parts, which fails with ambiguous conversion.
-// ra:: cannot see the global operators, but handles these types through std::format (f128 in stdlib; c128 in ply.hh for the time being).
+// ra:: cannot see the global operators, but handles these types through std::format (c128 in ply.hh for the time being).
 inline std::ostream & operator<<(std::ostream & o, ra::f128 const & r) { std::print(o, "{}", r); return o; }
 inline std::ostream & operator<<(std::ostream & o, ra::c128 const & z) { std::print(o, "({},{})", z.real(), z.imag()); return o; }
 #endif // RA_FLOAT128
@@ -337,7 +337,6 @@ template <class T, T v> constexpr inline bool is_scalar_def<std::integral_consta
 template <> constexpr inline bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr inline bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr inline bool is_scalar_def<std::partial_ordering> = true;
-// template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
 RA_IS_DEF(is_iterator, Iterator<A>)
 template <class A> concept is_ra = is_iterator<A> || Slice<A>;
@@ -443,10 +442,24 @@ shape(V const & v)
     }
 }
 
+} // namespace ra::
+
 
 // --------------
 // Format and print, forwards (see ply.hh).
 // --------------
+
+// check whether a type has its own stream op, to exclude it from the generic is_array_formattable op. The check is in a separate namespace, so the constraint {o << a } only sees std:: or ADL stream ops, and not ra's op. This detection covers std::string_view, etc. [ra13].
+// ra_adl_probe 1) avoids circular evaluation in is_array_formattable, and 2) lets types associated with ra:: still find ra::'s op through ADL.
+
+namespace ra_detail {
+
+template <class A> concept has_own_stream_op = !(requires(A const & a) { ra_adl_probe_(a); })
+    && requires(std::ostream & o, A const & a) { { o << a } -> std::convertible_to<std::ostream &>; };
+
+} // namespace ra_detail
+
+namespace ra {
 
 enum shape_t { defaultshape, withshape, noshape };
 
@@ -466,8 +479,8 @@ constexpr format_t pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ",
 template <class A> struct Fmt { format_t f = {}; A a; };
 template <class A> constexpr auto fmt(format_t f, A && a) { return Fmt<A> { f, RA_FW(a) }; }
 
-// exclude std::string_view so it still prints as a string [ra13].
-RA_IS_DEF(is_array_formattable, is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>));
+constexpr void ra_adl_probe_(auto const &) {} // for has_own_stream_op above
+RA_IS_DEF(is_array_formattable, is_ra<A> || (is_fov<A> && !ra_detail::has_own_stream_op<A>));
 
 constexpr std::ostream & operator<<(std::ostream & o, is_array_formattable auto && a) { return o << fmt({}, RA_FW(a)); }
 template <class T> constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> a) { return o << fmt({}, a); }
