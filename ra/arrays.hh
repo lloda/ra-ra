@@ -288,19 +288,20 @@ struct Array
     constexpr Array() requires (R>0): dimv {zdimv} {}
     constexpr Array() requires (R==ANY): dimv {{0, 1}} {}
     constexpr Array() requires (0==R): Array({}, none) {}
-    constexpr Array(auto const & x): Array(ra::shape(x), x) {}
-    constexpr Array(braces<T, R> x) requires (R>=1): Array(braces_shape<T, R>(x), x) {}
+//  attribute to work around bogus uninitialized warnings with -std=c++26 -O3 in gcc 16
+    __attribute__((always_inline)) constexpr Array(auto const & x): Array(ra::shape(x), x) {}
+    __attribute__((always_inline)) constexpr Array(braces<T, R> x) requires (R>=1): Array(braces_shape<T, R>(x), x) {}
 #define RA_BRACES(N) constexpr Array(braces<T, N> x) requires (R==ANY): Array(braces_shape<T, N>(x), x) {}
     RA_FE(RA_BRACES, 1, 2, 3, 4)
 #undef RA_BRACES
-    constexpr Array(auto && s, none_t) { store = storage_traits<Store>::create(filldimv(iter(RA_FW(s)), dimv)); }
-    constexpr Array(auto && s, auto const & x): Array(RA_FW(s), none) { view() = x; }
-    constexpr Array(auto && s, std::initializer_list<T> x): Array(RA_FW(s), none) { to_ravel(x, *this); }
-    constexpr Array(std::array<dim_t, 0> s, auto const & x): Array(iter(s), x) {};
-    constexpr Array(std::array<dim_t, 0> s, std::initializer_list<T> x): Array(iter(s), x) {}
-    template <int N> constexpr Array(dim_t (&&s)[N], auto const & x): Array(iter(s), x) {}
-    template <int N> constexpr Array(dim_t (&&s)[N], std::initializer_list<T> x): Array(iter(s), x) {}
-    template <int N> constexpr Array(dim_t (&&s)[N], auto * p): Array(iter(s), none) { std::ranges::copy_n(p, size(), begin()); }
+    __attribute__((always_inline)) constexpr Array(auto && s, none_t) { store = storage_traits<Store>::create(filldimv(iter(RA_FW(s)), dimv)); }
+    __attribute__((always_inline)) constexpr Array(auto && s, auto const & x): Array(RA_FW(s), none) { view() = x; }
+    __attribute__((always_inline)) constexpr Array(auto && s, std::initializer_list<T> x): Array(RA_FW(s), none) { to_ravel(x, *this); }
+    __attribute__((always_inline)) constexpr Array(std::array<dim_t, 0> s, auto const & x): Array(iter(s), x) {};
+    __attribute__((always_inline)) constexpr Array(std::array<dim_t, 0> s, std::initializer_list<T> x): Array(iter(s), x) {}
+    template <int N> __attribute__((always_inline)) constexpr Array(dim_t (&&s)[N], auto const & x): Array(iter(s), x) {}
+    template <int N> __attribute__((always_inline)) constexpr Array(dim_t (&&s)[N], std::initializer_list<T> x): Array(iter(s), x) {}
+    template <int N> __attribute__((always_inline)) constexpr Array(dim_t (&&s)[N], auto * p): Array(iter(s), none) { std::ranges::copy_n(p, size(), begin()); }
 #define RA_CR(left) if constexpr (ANY==R) { RA_CK(left rank()); } else { static_assert(left R); }
 // resize first axis or full shape. Only for some kinds of store.
     constexpr void resize(dim_t const s) { RA_CR(0<); dimv[0].len = s; store.resize(size()); }
