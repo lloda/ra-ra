@@ -285,7 +285,7 @@ struct Cell: public CellBase<P, Dimv, Cr>
     RA_ASSIGNOPS_ITER(Cell)
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
     constexpr rank_t rank() const requires (ANY==framer) { return ra::size(dimv)-ra::size(c.dimv); }
-#pragma GCC diagnostic push // test/bug83.cc gcc-14 RA_CHECK=0 --no-sanitize
+#pragma GCC diagnostic push // test/bug83.cc et al: gcc14/15/16 -DRA_CHECK=0/1 -O2 -O3, with and without --sanitize
 #pragma GCC diagnostic warning "-Warray-bounds"
 #define RAC(k, f) (CT || 0==framer || is_ctype<decltype(simv[k].f)>)
     constexpr static dim_t len_s(auto k) { if constexpr (RAC(k, len)) return len(k); else return ANY; }
@@ -306,7 +306,7 @@ struct Cell: public CellBase<P, Dimv, Cr>
     constexpr auto save() const { return c.cp; }
     constexpr void load(P p) { c.cp=p; }
 #pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t> in gcc14/15 -O3
+#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t>: gcc14/15/16 -DRA_CHECK=0/1 --no-sanitize -O2
     constexpr void mov(dim_t d) { std::ranges::advance(c.cp, d); }
 #pragma GCC diagnostic pop
 };

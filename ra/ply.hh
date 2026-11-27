@@ -366,11 +366,11 @@ constexpr auto
 fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak)
 {
     if constexpr (dobv) {
-#pragma GCC diagnostic push // gcc14/15 -DRA_CHECK=0 --no-sanitize -O3 [ra02]
+#pragma GCC diagnostic push // gcc14/15/16 -DRA_CHECK=0/1 --no-sanitize -O2 -O3 [ra02]
 #pragma GCC diagnostic warning "-Waggressive-loop-optimizations"
         for (; ak<ra::rank(a); ++ak, ++bk) {
 #pragma GCC diagnostic pop
-#pragma GCC diagnostic push // gcc14/15 -DRA_CHECK=0 --no-sanitize -O2 -O3 [ra03]
+#pragma GCC diagnostic push // gcc14/15/16 -DRA_CHECK=0 --no-sanitize -O2 -O3 [ra03]
 #pragma GCC diagnostic warning "-Warray-bounds"
 #pragma GCC diagnostic warning "-Wstringop-overflow"
             bv[bk] = a.dimv[ak];
