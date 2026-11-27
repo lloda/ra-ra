@@ -140,10 +140,7 @@ ply_fixed(Iterator auto && a, Early const & early = none)
     } else {
 // inside first. FIXME better heuristic - but first need a way to force row-major
         constexpr auto order = []<class ... I>(list<I ...>){ return std::array<int, rank>{(rank-1-I{}) ...}; }(mp::iota<rank>{});
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Warray-bounds"
-        auto ss0 = a.step(order[0]); // gcc 14.1 with RA_CHECK=0 and sanitizer on
-#pragma GCC diagnostic pop
+        auto ss0 = a.step(order[0]);
         if constexpr (requires { none_t(early); }) {
             subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
         } else {
