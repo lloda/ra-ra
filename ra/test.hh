@@ -256,7 +256,7 @@ struct Benchmark
         if (t.empty()) { return 0; }
         size_t n = t.size()/2;
         std::ranges::nth_element(t, t.begin()+n);
-        return t.size()^1 ? t[n] : (std::ranges::nth_element(t, t.begin()+n-1), (t[n]+t[n-1])/2.);
+        return (t.size()&1) ? t[n] : (*std::ranges::max_element(t.begin(), t.begin()+n) + t[n])/2.;
     }
 
     static char const * unit(double u) { return 1e-9==u ? "ns" : 1e-6==u ? "us" : 1e-3==u ? "ms" : 1==u ? "s" : "?"; }

@@ -96,5 +96,24 @@ int main()
         tr.test(!isfinite(PINF));
         tr.test(!isfinite(QNAN));
     }
+    tr.section("Benchmark::median");
+    {
+        std::vector<double> v;
+        tr.test_eq(0., ra::Benchmark::median(v));
+        v = { 42. };
+        tr.test_eq(42., ra::Benchmark::median(v));
+        v = { 5., 4., 3., 2., 1. };
+        tr.test_eq(3., ra::Benchmark::median(v));
+        v = { 5., 4., 3., 2., 1., 6. };
+        tr.test_eq(3.5, ra::Benchmark::median(v));
+        v = { 4., 3., 2., 1. };
+        tr.test_eq(2.5, ra::Benchmark::median(v));
+        v = { 1., 2., 3., 4. };
+        tr.test_eq(2.5, ra::Benchmark::median(v));
+        v = { 1., 2., 2., 3. };
+        tr.test_eq(2., ra::Benchmark::median(v));
+        v = { 7., 7., 7. };
+        tr.test_eq(7., ra::Benchmark::median(v));
+    }
     return tr.summary();
 }
